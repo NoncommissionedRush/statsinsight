@@ -67,7 +67,7 @@ function App() {
   useEffect(() => {
     getCatalog()
       .then(setCatalog)
-      .catch((e) => setError(`Failed to load catalog: ${e.message}`));
+      .catch((e) => setError(`Nepodarilo sa načítať katalóg: ${e.message}`));
   }, []);
 
   useEffect(() => {
@@ -111,7 +111,7 @@ function App() {
       })
       .catch((e: Error) => {
         if (!cancelled) {
-          setError(`Analysis failed: ${e.message}`);
+          setError(`Analýza zlyhala: ${e.message}`);
         }
       })
       .finally(() => {
@@ -146,7 +146,7 @@ function App() {
       .catch((e: Error) => {
         if (!cancelled) {
           setGroceryResult(null);
-          setGroceryError(`Grocery analysis unavailable: ${e.message}`);
+          setGroceryError(`Analýza potravín nedostupná: ${e.message}`);
         }
       })
       .finally(() => {
@@ -181,7 +181,7 @@ function App() {
       .catch((e: Error) => {
         if (!cancelled) {
           setRealEstateResult(null);
-          setRealEstateError(`Real estate analysis unavailable: ${e.message}`);
+          setRealEstateError(`Analýza nehnuteľností nedostupná: ${e.message}`);
         }
       })
       .finally(() => {
@@ -216,7 +216,7 @@ function App() {
       .catch((e: Error) => {
         if (!cancelled) {
           setTradeResult(null);
-          setTradeError(`Trade analysis unavailable: ${e.message}`);
+          setTradeError(`Analýza obchodu nedostupná: ${e.message}`);
         }
       })
       .finally(() => {
@@ -287,7 +287,7 @@ function App() {
     : [];
 
   const tradeExportSeries = showTradeInsights
-    ? filteredResult?.compareSeries?.find((series) => series.dimensions.displaySeries === 'Exports') ?? null
+    ? filteredResult?.compareSeries?.[0] ?? null
     : null;
 
   const tradeExportInsights = tradeExportSeries
@@ -374,7 +374,7 @@ function App() {
     <div className="app">
       <header>
         <h1>StatInsight</h1>
-        <p className="subtitle">Statistical Data Insight Tool for SK</p>
+        <p className="subtitle">Štatistický nástroj pre analýzu dát SR</p>
       </header>
 
       <main>
@@ -388,7 +388,7 @@ function App() {
         {loading && !result && (
           <div className="loading">
             <div className="spinner" />
-            <p>Fetching and analyzing data...</p>
+            <p>Načítavam a analyzujem dáta...</p>
           </div>
         )}
 
@@ -404,7 +404,7 @@ function App() {
               />
             )}
 
-            {loading && <p className="results-status">Updating comparison data...</p>}
+            {loading && <p className="results-status">Aktualizujem porovnávacie dáta...</p>}
 
             <TimeRangePicker
               options={rangeOptions}
@@ -423,8 +423,8 @@ function App() {
             />
             {showTradeInsights ? (
               <div className="trade-insights-grid">
-                <InsightCards insights={tradeImportInsights} title="Import Insights" />
-                <InsightCards insights={tradeExportInsights} title="Export Insights" />
+                <InsightCards insights={tradeImportInsights} title="Postrehy – Import" />
+                <InsightCards insights={tradeExportInsights} title="Postrehy – Export" />
               </div>
             ) : (
               <InsightCards insights={filteredResult.insights} />
@@ -432,7 +432,7 @@ function App() {
 
             {showGroceryInsights && (
               <section className="groceries-shell">
-                {groceryLoading && <p className="groceries-status">Analyzing grocery price movers...</p>}
+                {groceryLoading && <p className="groceries-status">Analyzujem pohyby cien potravín...</p>}
                 {groceryError && <p className="groceries-status error-text">{groceryError}</p>}
                 {groceryResult && !groceryLoading && <GroceryInsights data={groceryResult} />}
               </section>
@@ -440,7 +440,7 @@ function App() {
 
             {showRealEstateInsights && (
               <section className="real-estate-shell">
-                {realEstateLoading && <p className="groceries-status">Analyzing real estate price movers...</p>}
+                {realEstateLoading && <p className="groceries-status">Analyzujem pohyby cien nehnuteľností...</p>}
                 {realEstateError && <p className="groceries-status error-text">{realEstateError}</p>}
                 {realEstateResult && !realEstateLoading && <RealEstateInsights data={realEstateResult} />}
               </section>
@@ -448,7 +448,7 @@ function App() {
 
             {showTradeInsights && (
               <section className="trade-shell">
-                {tradeLoading && <p className="groceries-status">Analyzing import and export category movers...</p>}
+                {tradeLoading && <p className="groceries-status">Analyzujem pohyby kategórií importu a exportu...</p>}
                 {tradeError && <p className="groceries-status error-text">{tradeError}</p>}
                 {tradeResult && !tradeLoading && <TradeInsights data={tradeResult} />}
               </section>
@@ -463,12 +463,12 @@ function App() {
             />
 
             <details className="raw-data">
-              <summary>Raw data ({filteredResult.series.points.length} data points)</summary>
+              <summary>Zdrojové dáta ({filteredResult.series.points.length} dátových bodov)</summary>
               <table>
                 <thead>
                   <tr>
-                    <th>Period</th>
-                    <th>Value</th>
+                    <th>Obdobie</th>
+                    <th>Hodnota</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -487,7 +487,7 @@ function App() {
 
       <footer>
         <p>
-          Sources: <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noreferrer">Eurostat</a>
+          Zdroje: <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noreferrer">Eurostat</a>
           {' | '}
           <a href="https://datacube.statistics.sk" target="_blank" rel="noreferrer">SU SR DATAcube</a>
         </p>

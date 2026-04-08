@@ -1,11 +1,33 @@
 import type { ChartPayload, Insight, TimePoint, TimeSeries } from './types';
 
 function formatDeltaUnit(unit?: string): string {
-  return unit === '%' ? ' percentage points' : '';
+  return unit === '%' ? ' percentuálne body' : '';
+}
+
+const SLOVAK_MONTHS = [
+  'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
+  'Júl', 'August', 'September', 'Október', 'November', 'December',
+];
+
+function formatPeriodLabel(label: string): string {
+  const m = label.match(/^(\d{4})-(\d{2})$/);
+  if (m) {
+    const month = parseInt(m[2], 10);
+    if (month >= 1 && month <= 12) return `${SLOVAK_MONTHS[month - 1]} ${m[1]}`;
+  }
+  return label;
 }
 
 function subjectLabel(subject?: string): string {
-  return subject || 'Value';
+  return subject || 'Hodnota';
+}
+
+// Masculine subjects require different verb endings in Slovak
+const MASCULINE_SUBJECTS = new Set(['Dovoz', 'Vývoz', 'Index', 'Rast']);
+
+function grammaticalGender(subject?: string): 'm' | 'f' {
+  if (subject && MASCULINE_SUBJECTS.has(subject)) return 'm';
+  return 'f';
 }
 
 function periodDelta(points: TimePoint[], unit?: string, subject?: string): Insight | null {
@@ -15,12 +37,15 @@ function periodDelta(points: TimePoint[], unit?: string, subject?: string): Insi
   if (curr.value === null || prev.value === null) return null;
 
   const delta = curr.value - prev.value;
-  const direction = delta >= 0 ? 'increased' : 'decreased';
+  const g = grammaticalGender(subject);
+  const direction = delta >= 0
+    ? (g === 'm' ? 'vzrástol' : 'vzrástla')
+    : (g === 'm' ? 'klesol' : 'klesla');
 
   return {
     kind: 'period_delta',
-    title: 'Latest Change',
-    description: `${subjectLabel(subject)} ${direction} by ${Math.abs(delta).toFixed(2)}${formatDeltaUnit(unit)} from ${prev.label || prev.time} to ${curr.label || curr.time}.`,
+    title: 'Posledná zmena',
+    description: `${subjectLabel(subject)} ${direction} o ${Math.abs(delta).toFixed(2)}${formatDeltaUnit(unit)} z ${formatPeriodLabel(prev.label || prev.time)} na ${formatPeriodLabel(curr.label || curr.time)}.`,
     value: delta,
     period: curr.time,
   };
@@ -40,12 +65,12 @@ function averageChange(points: TimePoint[], unit?: string, subject?: string): In
   if (deltas.length === 0) return null;
 
   const avgDelta = deltas.reduce((sum, delta) => sum + delta, 0) / deltas.length;
-  const direction = avgDelta >= 0 ? 'increase' : 'decrease';
+  const direction = avgDelta >= 0 ? 'nárast' : 'pokles';
 
   return {
     kind: 'average_change',
-    title: 'Average Change',
-    description: `Average ${subject ? subject.toLowerCase() + ' ' : ''}${direction} per period was ${Math.abs(avgDelta).toFixed(2)}${formatDeltaUnit(unit)} across the selected range.`,
+    title: 'Priemerná zmena',
+    description: `Priemerný ${direction}${subject ? ' (' + subject.toLowerCase() + ')' : ''} za obdobie bol ${Math.abs(avgDelta).toFixed(2)}${formatDeltaUnit(unit)} v rámci zvoleného rozsahu.`,
     value: avgDelta,
     period: points[points.length - 1].time,
   };
@@ -58,12 +83,15 @@ function pctChange(points: TimePoint[], subject?: string): Insight | null {
   if (curr.value === null || prev.value === null || prev.value === 0) return null;
 
   const pct = ((curr.value - prev.value) / Math.abs(prev.value)) * 100;
-  const direction = pct >= 0 ? 'up' : 'down';
+  const g = grammaticalGender(subject);
+  const direction = pct >= 0
+    ? (g === 'm' ? 'vzrástol' : 'vzrástla')
+    : (g === 'm' ? 'klesol' : 'klesla');
 
   return {
     kind: 'pct_change',
-    title: 'Percentage Change',
-    description: `${subjectLabel(subject)} was ${direction === 'up' ? 'up' : 'down'} ${Math.abs(pct).toFixed(1)}% from the previous period.`,
+    title: 'Percentuálna zmena',
+    description: `${subjectLabel(subject)} ${direction} o ${Math.abs(pct).toFixed(1)}% z ${formatPeriodLabel(prev.label || prev.time)} na ${formatPeriodLabel(curr.label || curr.time)}.`,
     value: pct,
     period: curr.time,
   };
@@ -87,12 +115,12 @@ function rollingAvgDeviation(points: TimePoint[], window = 6, subject?: string):
   const deviation = (latest.value - avg) / stdDev;
   if (Math.abs(deviation) < 1) return null;
 
-  const direction = deviation > 0 ? 'above' : 'below';
+  const direction = deviation > 0 ? 'nad' : 'pod';
 
   return {
     kind: 'rolling_avg_deviation',
-    title: 'Rolling Average Deviation',
-    description: `Current ${subject ? subject.toLowerCase() : 'value'} is ${Math.abs(deviation).toFixed(1)} standard deviations ${direction} the ${window}-period average (${avg.toFixed(2)}).`,
+    title: 'Odchýlka od kĺzavého priemeru',
+    description: `${grammaticalGender(subject) === 'm' ? 'Aktuálny' : 'Aktuálna'} ${subject ? subject.toLowerCase() : 'hodnota'} je ${Math.abs(deviation).toFixed(1)} smerodajných odchýlok ${direction} ${window}-obdobným priemerom (${avg.toFixed(2)}).`,
     value: deviation,
     period: latest.time,
   };
@@ -114,12 +142,12 @@ function trendReversal(points: TimePoint[], subject?: string): Insight | null {
   if (lastSign === 0 || prevSign === 0 || lastSign === prevSign) return null;
 
   const direction =
-    lastSign > 0 ? 'declining to rising' : 'rising to declining';
+    lastSign > 0 ? 'klesajúci na rastúci' : 'rastúci na klesajúci';
 
   return {
     kind: 'trend_reversal',
-    title: 'Trend Reversal Detected',
-    description: `${subjectLabel(subject)} trend reversed from ${direction} at ${recent[recent.length - 1].label || recent[recent.length - 1].time}.`,
+    title: 'Zistený obrat trendu',
+    description: `Trend hodnoty ${subjectLabel(subject)} sa obrátil z ${direction} v ${formatPeriodLabel(recent[recent.length - 1].label || recent[recent.length - 1].time)}.`,
     period: recent[recent.length - 1].time,
   };
 }
@@ -148,8 +176,8 @@ function largestMove(points: TimePoint[], unit?: string, subject?: string): Insi
 
   return {
     kind: 'largest_move',
-    title: 'Largest Move in Range',
-    description: `${subjectLabel(subject)} moved ${direction}${delta.toFixed(2)}${formatDeltaUnit(unit)} between ${from.label || from.time} and ${to.label || to.time}.`,
+    title: 'Najväčší pohyb v rozsahu',
+    description: `${subjectLabel(subject)} ${grammaticalGender(subject) === 'm' ? 'sa zmenil' : 'sa zmenila'} o ${direction}${delta.toFixed(2)}${formatDeltaUnit(unit)} medzi ${formatPeriodLabel(from.label || from.time)} a ${formatPeriodLabel(to.label || to.time)}.`,
     value: delta,
     period: to.time,
   };
@@ -181,6 +209,6 @@ export function buildChartPayload(series: TimeSeries): ChartPayload {
     title: series.datasetLabel,
     primarySeriesName:
       series.dimensions.displaySeries ||
-      (series.dimensions.geo === 'SK' ? 'Slovakia' : series.datasetLabel),
+      (series.dimensions.geo === 'SK' ? 'Slovensko' : series.datasetLabel),
   };
 }

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { RealEstateAnalysisResponse, RealEstateMover } from '../types';
 import { copyChartHtml, downloadChartHtml, exportSvgChartAsHtml } from './chartExport';
+import { formatPeriodLabel } from '../utils';
 
 interface Props {
   data: RealEstateAnalysisResponse;
@@ -32,12 +33,12 @@ function renderMoverCard(title: string, mover: RealEstateMover | null, emptyMess
     <div className="real-estate-card">
       <h3>{title}</h3>
       <p>
-        Absolute change: {formatChange(mover)} index points
+        Absolútna zmena: {formatChange(mover)} indexových bodov
       </p>
       <p>
-        Relative change: {formatPercent(mover) ?? 'N/A'}
+        Relatívna zmena: {formatPercent(mover) ?? 'N/A'}
       </p>
-      <p>Index level: {mover.startValue.toFixed(2)} to {mover.endValue.toFixed(2)}</p>
+      <p>Úroveň indexu: {mover.startValue.toFixed(2)} na {mover.endValue.toFixed(2)}</p>
     </div>
   );
 }
@@ -51,10 +52,10 @@ function renderMoverTable(title: string, movers: RealEstateMover[]) {
       <table>
         <thead>
           <tr>
-            <th>Property Type</th>
-            <th>Change</th>
-            <th>Start</th>
-            <th>End</th>
+            <th>Typ nehnuteľnosti</th>
+            <th>Zmena</th>
+            <th>Začiatok</th>
+            <th>Koniec</th>
           </tr>
         </thead>
         <tbody>
@@ -91,13 +92,13 @@ export function RealEstateInsights({ data }: Props) {
     change: Number(mover.change.toFixed(2)),
     fill: mover.change >= 0 ? '#dc2626' : '#2563eb',
   }));
-  const exportTitle = `Real Estate Index Change Overview (${data.comparedFrom} to ${data.comparedTo})`;
+  const exportTitle = `Prehľad zmien indexu nehnuteľností (${formatPeriodLabel(data.comparedFrom)} – ${formatPeriodLabel(data.comparedTo)})`;
 
   const getExportHtml = () =>
     exportSvgChartAsHtml({
       container: chartRef.current,
       title: exportTitle,
-      unit: 'index points',
+      unit: 'indexové body',
       seriesNames: chartMovers.map((mover) => mover.name),
       source: 'SU SR DATAcube',
     });
@@ -105,33 +106,33 @@ export function RealEstateInsights({ data }: Props) {
   const handleCopy = async () => {
     try {
       await copyChartHtml(getExportHtml());
-      setExportStatus('Embeddable HTML copied to clipboard.');
+      setExportStatus('HTML skopírované do schránky.');
     } catch (error) {
-      setExportStatus(error instanceof Error ? error.message : 'Failed to copy chart HTML.');
+      setExportStatus(error instanceof Error ? error.message : 'Chyba pri kopírovaní HTML grafu.');
     }
   };
 
   const handleDownload = () => {
     try {
       downloadChartHtml(getExportHtml(), exportTitle);
-      setExportStatus('HTML file downloaded.');
+      setExportStatus('HTML súbor bol stiahnutý.');
     } catch (error) {
-      setExportStatus(error instanceof Error ? error.message : 'Failed to export chart HTML.');
+      setExportStatus(error instanceof Error ? error.message : 'Chyba pri exporte grafu do HTML.');
     }
   };
 
   return (
     <section className="real-estate-section">
       <div className="real-estate-header">
-        <h2>Real Estate Price Movers</h2>
+        <h2>Pohyby cien nehnuteľností</h2>
         <p>
-          Compared across {data.comparedFrom} to {data.comparedTo} using Slovak Statistics quarterly
-          transaction price indices ({data.measureLabel}).
+          Porovnané za obdobie {formatPeriodLabel(data.comparedFrom)} – {formatPeriodLabel(data.comparedTo)} na základe štvrťročných
+          transakčných cenových indexov SÚ SR ({data.measureLabel}).
         </p>
         {selectedRangeChanged && (
           <p className="real-estate-note">
-            Your selected range was {data.requestedFrom} to {data.requestedTo}, but real estate data is
-            currently available only for {data.comparedFrom} to {data.comparedTo} within that window.
+            Vami vybraté obdobie bolo {formatPeriodLabel(data.requestedFrom)} – {formatPeriodLabel(data.requestedTo)}, ale dáta o nehnuteľnostiach sú
+            momentálne dostupné len za {formatPeriodLabel(data.comparedFrom)} – {formatPeriodLabel(data.comparedTo)} v rámci tohto okna.
           </p>
         )}
       </div>
@@ -140,17 +141,17 @@ export function RealEstateInsights({ data }: Props) {
         {renderMoverCard(
           'Nehnuteľnosti spolu',
           propertyCards[0],
-          'No overall index change is available for this category in the selected range.',
+          'Pre túto kategóriu nie je dostupná žiadna zmena indexu vo vybranom období.',
         )}
         {renderMoverCard(
           'Nové nehnuteľnosti',
           propertyCards[1],
-          'No overall index change is available for this category in the selected range.',
+          'Pre túto kategóriu nie je dostupná žiadna zmena indexu vo vybranom období.',
         )}
         {renderMoverCard(
           'Existujúce nehnuteľnosti',
           propertyCards[2],
-          'No overall index change is available for this category in the selected range.',
+          'Pre túto kategóriu nie je dostupná žiadna zmena indexu vo vybranom období.',
         )}
       </div>
 
@@ -158,15 +159,15 @@ export function RealEstateInsights({ data }: Props) {
         <div ref={chartRef} className="real-estate-chart-card">
           <div className="mini-chart-header">
             <div className="real-estate-chart-copy">
-              <h3>Index Change Overview</h3>
-              <p>Overall change across the tracked real-estate categories in the selected range.</p>
+              <h3>Prehľad zmien indexu</h3>
+              <p>Celková zmena naprieč sledovanými kategóriami nehnuteľností vo vybranom období.</p>
             </div>
             <div className="chart-actions">
               <button type="button" className="chart-action" onClick={handleCopy}>
-                Copy HTML
+                Kopírovať HTML
               </button>
               <button type="button" className="chart-action" onClick={handleDownload}>
-                Download HTML
+                Stiahnuť HTML
               </button>
             </div>
           </div>
@@ -195,9 +196,9 @@ export function RealEstateInsights({ data }: Props) {
 
       {data.movers.length > 0 && (
         <details className="raw-data">
-          <summary>Real estate category changes ({data.movers.length} categories)</summary>
+          <summary>Zmeny kategórií nehnuteľností ({data.movers.length} kategórií)</summary>
           <div className="grocery-tables">
-            {renderMoverTable('All Categories', data.movers)}
+            {renderMoverTable('Všetky kategórie', data.movers)}
           </div>
         </details>
       )}

@@ -27,13 +27,13 @@ export function TimeRangePicker({
   return (
     <section className="time-range-card">
       <div className="time-range-copy">
-        <h2>Time Range</h2>
-        <p>Focus the chart and insights on a subset of the loaded time series.</p>
+        <h2>Časové obdobie</h2>
+        <p>Zamerajte graf a postrehy na podmnožinu načítaných časových radov.</p>
       </div>
 
       <div className="time-range-controls">
         <label>
-          <span>From</span>
+          <span>Od</span>
           <select value={from} onChange={(event) => onFromChange(event.target.value)} disabled={disabled}>
             {options.map((option) => (
               <option key={option.value} value={option.value}>
@@ -44,7 +44,7 @@ export function TimeRangePicker({
         </label>
 
         <label>
-          <span>To</span>
+          <span>Do</span>
           <select value={to} onChange={(event) => onToChange(event.target.value)} disabled={disabled}>
             {options.map((option) => (
               <option key={option.value} value={option.value}>
@@ -56,7 +56,7 @@ export function TimeRangePicker({
       </div>
 
       <p className="time-range-summary">
-        Showing {visiblePoints} of {totalPoints} loaded periods.
+        Zobrazených {visiblePoints} z {totalPoints} načítaných období.
       </p>
     </section>
   );

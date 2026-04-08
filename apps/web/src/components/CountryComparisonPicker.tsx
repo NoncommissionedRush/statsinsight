@@ -19,23 +19,23 @@ export function CountryComparisonPicker({
   const selectedCount = selected.length;
   const summary =
     selectedCount > 0
-      ? `${selectedCount} selected`
-      : `Choose up to ${maxSelected} countries`;
+      ? `${selectedCount} vybraných`
+      : `Vyberte až ${maxSelected} krajín`;
 
   return (
     <details className="comparison-card" open>
       <summary className="comparison-summary">
         <div className="comparison-summary-copy">
-          <h2>Country Comparison</h2>
+          <h2>Porovnanie krajín</h2>
           <p>{summary}</p>
         </div>
-        <span className="comparison-summary-toggle">Show/Hide</span>
+        <span className="comparison-summary-toggle">Zobraziť/Skryť</span>
       </summary>
 
       <div className="comparison-body">
         <div className="comparison-copy">
           <p>
-            Compare Slovakia with up to {maxSelected} other countries on the same Eurostat chart.
+            Porovnajte Slovensko s až {maxSelected} ďalšími krajinami na rovnakom grafe Eurostatu.
           </p>
         </div>
 

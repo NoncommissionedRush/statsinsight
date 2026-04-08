@@ -14,9 +14,9 @@ const KIND_ICONS: Record<string, string> = {
   largest_move: 'max',
 };
 
-export function InsightCards({ insights, title = 'Insights' }: Props) {
+export function InsightCards({ insights, title = 'Postrehy' }: Props) {
   if (insights.length === 0) {
-    return <p className="no-insights">No notable insights detected for this dataset.</p>;
+    return <p className="no-insights">Pre tento dataset neboli zistené žiadne pozoruhodné poznatky.</p>;
   }
 
   return (
@@ -29,7 +29,6 @@ export function InsightCards({ insights, title = 'Insights' }: Props) {
             <div className="insight-content">
               <h4>{insight.title}</h4>
               <p>{insight.description}</p>
-              {insight.period && <span className="insight-period">{insight.period}</span>}
             </div>
           </div>
         ))}

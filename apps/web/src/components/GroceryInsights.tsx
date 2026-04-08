@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { GroceryAnalysisResponse, GroceryMover } from '../types';
 import { copyChartHtml, downloadChartHtml, exportSvgChartAsHtml } from './chartExport';
+import { formatPeriodLabel } from '../utils';
 
 interface Props {
   data: GroceryAnalysisResponse;
@@ -40,7 +41,7 @@ function renderMoverCard(title: string, mover: GroceryMover | null, emptyMessage
         {secondary ? ` (${secondary})` : ''}
       </p>
       <p>
-        {mover.startValue.toFixed(2)} to {mover.endValue.toFixed(2)} {mover.unit}
+        {mover.startValue.toFixed(2)} na {mover.endValue.toFixed(2)} {mover.unit}
       </p>
     </div>
   );
@@ -55,10 +56,10 @@ function renderMoverTable(title: string, movers: GroceryMover[]) {
       <table>
         <thead>
           <tr>
-            <th>Item</th>
-            <th>Change</th>
-            <th>Start</th>
-            <th>End</th>
+            <th>Položka</th>
+            <th>Zmena</th>
+            <th>Začiatok</th>
+            <th>Koniec</th>
           </tr>
         </thead>
         <tbody>
@@ -105,13 +106,13 @@ export function GroceryInsights({ data }: Props) {
     change: Number(mover.change.toFixed(2)),
     fill: mover.change >= 0 ? '#dc2626' : '#2563eb',
   }));
-  const exportTitle = `Grocery Price Change Overview (${data.comparedFrom} to ${data.comparedTo})`;
+  const exportTitle = `Prehľad zmien cien potravín (${formatPeriodLabel(data.comparedFrom)} – ${formatPeriodLabel(data.comparedTo)})`;
 
   const getExportHtml = () =>
     exportSvgChartAsHtml({
       container: chartRef.current,
       title: exportTitle,
-      unit: 'change in price',
+      unit: 'zmena ceny',
       seriesNames: chartMovers.map((mover) => mover.name),
       source: 'SU SR DATAcube',
     });
@@ -119,58 +120,58 @@ export function GroceryInsights({ data }: Props) {
   const handleCopy = async () => {
     try {
       await copyChartHtml(getExportHtml());
-      setExportStatus('Embeddable HTML copied to clipboard.');
+      setExportStatus('HTML skopírované do schránky.');
     } catch (error) {
-      setExportStatus(error instanceof Error ? error.message : 'Failed to copy chart HTML.');
+      setExportStatus(error instanceof Error ? error.message : 'Chyba pri kopírovaní HTML grafu.');
     }
   };
 
   const handleDownload = () => {
     try {
       downloadChartHtml(getExportHtml(), exportTitle);
-      setExportStatus('HTML file downloaded.');
+      setExportStatus('HTML súbor bol stiahnutý.');
     } catch (error) {
-      setExportStatus(error instanceof Error ? error.message : 'Failed to export chart HTML.');
+      setExportStatus(error instanceof Error ? error.message : 'Chyba pri exporte grafu do HTML.');
     }
   };
 
   return (
     <section className="groceries-section">
       <div className="groceries-header">
-        <h2>Grocery Price Movers</h2>
+        <h2>Pohyby cien potravín</h2>
         <p>
-          Compared across {data.comparedFrom} to {data.comparedTo} using Slovak Statistics monthly
-          average consumer prices for selected food and drink items.
+          Porovnané za obdobie {formatPeriodLabel(data.comparedFrom)} – {formatPeriodLabel(data.comparedTo)} na základe mesačných priemerných
+          spotrebiteľských cien vybraných potravín a nápojov SÚ SR.
         </p>
         {selectedRangeChanged && (
           <p className="groceries-note">
-            Your selected range was {data.requestedFrom} to {data.requestedTo}, but grocery data is
-            currently available only for {data.comparedFrom} to {data.comparedTo} within that window.
+            Vami vybraté obdobie bolo {formatPeriodLabel(data.requestedFrom)} – {formatPeriodLabel(data.requestedTo)}, ale dáta o potravinách sú
+            momentálne dostupné len za {formatPeriodLabel(data.comparedFrom)} – {formatPeriodLabel(data.comparedTo)} v rámci tohto okna.
           </p>
         )}
       </div>
 
       <div className="grocery-grid grocery-grid-four">
         {renderMoverCard(
-          'Largest Increase',
+          'Najväčší nárast',
           data.topIncrease,
-          'No grocery price increase was detected in this range.',
+          'V tomto období nebol zaznamenaný žiadny nárast ceny potravín.',
         )}
         {renderMoverCard(
-          'Largest Decrease',
+          'Najväčší pokles',
           data.topDecrease,
-          'No grocery price decrease was detected in this range.',
+          'V tomto období nebol zaznamenaný žiadny pokles ceny potravín.',
         )}
         {renderMoverCard(
-          'Largest % Increase',
+          'Najväčší % nárast',
           topPctIncrease,
-          'No grocery percentage increase was detected in this range.',
+          'V tomto období nebol zaznamenaný žiadny percentuálny nárast ceny potravín.',
           'percent',
         )}
         {renderMoverCard(
-          'Largest % Decrease',
+          'Najväčší % pokles',
           topPctDecrease,
-          'No grocery percentage decrease was detected in this range.',
+          'V tomto období nebol zaznamenaný žiadny percentuálny pokles ceny potravín.',
           'percent',
         )}
       </div>
@@ -179,15 +180,15 @@ export function GroceryInsights({ data }: Props) {
         <div ref={chartRef} className="grocery-chart-card">
           <div className="mini-chart-header">
             <div className="grocery-chart-copy">
-              <h3>Price Change Overview</h3>
-              <p>Largest decreases and increases in the selected grocery range.</p>
+              <h3>Prehľad zmien cien</h3>
+              <p>Najväčšie poklesy a nárasty v rámci vybraného obdobia.</p>
             </div>
             <div className="chart-actions">
               <button type="button" className="chart-action" onClick={handleCopy}>
-                Copy HTML
+                Kopírovať HTML
               </button>
               <button type="button" className="chart-action" onClick={handleDownload}>
-                Download HTML
+                Stiahnuť HTML
               </button>
             </div>
           </div>
@@ -222,11 +223,11 @@ export function GroceryInsights({ data }: Props) {
       {(topIncreases.length > 0 || topDecreases.length > 0) && (
         <details className="raw-data">
           <summary>
-            Grocery movers tables ({topIncreases.length} increases, {topDecreases.length} decreases)
+            Tabuľky pohybov cien potravín ({topIncreases.length} nárastov, {topDecreases.length} poklesov)
           </summary>
           <div className="grocery-tables">
-            {renderMoverTable('Top Increases', topIncreases)}
-            {renderMoverTable('Top Decreases', topDecreases)}
+            {renderMoverTable('Najväčšie nárasty', topIncreases)}
+            {renderMoverTable('Najväčšie poklesy', topDecreases)}
           </div>
         </details>
       )}

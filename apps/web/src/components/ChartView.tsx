@@ -32,7 +32,7 @@ function buildSeriesLabel(series: TimeSeries): string {
 export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
-  const primarySeriesName = chart.primarySeriesName || 'Slovakia';
+  const primarySeriesName = chart.primarySeriesName || 'Slovensko';
   const data = chart.labels.map((label, index) => {
     const row: Record<string, string | number | null> = {
       name: label,
@@ -66,9 +66,9 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
     try {
       const html = getExportHtml();
       downloadChartHtml(html, chart.title);
-      setExportStatus('HTML file downloaded.');
+      setExportStatus('HTML súbor bol stiahnutý.');
     } catch (error) {
-      setExportStatus(error instanceof Error ? error.message : 'Failed to export chart HTML.');
+      setExportStatus(error instanceof Error ? error.message : 'Chyba pri exporte grafu do HTML.');
     }
   };
 
@@ -76,9 +76,9 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
     try {
       const html = getExportHtml();
       await copyChartHtml(html);
-      setExportStatus('Embeddable HTML copied to clipboard.');
+      setExportStatus('HTML skopírované do schránky.');
     } catch (error) {
-      setExportStatus(error instanceof Error ? error.message : 'Failed to copy chart HTML.');
+      setExportStatus(error instanceof Error ? error.message : 'Chyba pri kopírovaní HTML grafu.');
     }
   };
 
@@ -88,10 +88,10 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
         <h2>{chart.title}</h2>
         <div className="chart-actions">
           <button type="button" className="chart-action" onClick={handleCopy}>
-            Copy HTML
+            Kopírovať HTML
           </button>
           <button type="button" className="chart-action" onClick={handleDownload}>
-            Download HTML
+            Stiahnuť HTML
           </button>
         </div>
       </div>
@@ -123,7 +123,7 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
               y={avg}
               stroke="#94a3b8"
               strokeDasharray="5 5"
-              label={{ value: `${primarySeriesName} Avg: ${avg.toFixed(2)}`, position: 'right', fontSize: 11 }}
+              label={{ value: `${primarySeriesName} Priem.: ${avg.toFixed(2)}`, position: 'right', fontSize: 11 }}
             />
           )}
           <Line

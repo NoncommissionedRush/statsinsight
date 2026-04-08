@@ -29,7 +29,7 @@ function buildExportHtml({
   const seriesLine = seriesNames.join(', ');
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="sk">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -116,15 +116,15 @@ function buildExportHtml({
     <figure class="chart-embed">
       <div class="chart-meta">
         <h1>${title}</h1>
-        <p>Unit: ${unit || 'value'}</p>
-        <p>Series: ${seriesLine}</p>
-        <p>Exported from StatInsight on ${exportedAt}</p>
+        <p>Jednotka: ${unit || 'hodnota'}</p>
+        <p>Série: ${seriesLine}</p>
+        <p>Exportované zo StatInsight dňa ${exportedAt}</p>
       </div>
       <div class="chart-svg">
         ${svgMarkup}
       </div>
       <div class="chart-footer">
-        <span class="chart-source">Source: ${source}</span>
+        <span class="chart-source">Zdroj: ${source}</span>
         <div class="chart-logo">${AKTUALITY_LOGO_SVG}</div>
       </div>
     </figure>
@@ -147,7 +147,7 @@ export function exportSvgChartAsHtml({
 }) {
   const svg = container?.querySelector('svg');
   if (!(svg instanceof SVGSVGElement)) {
-    throw new Error('Chart is still rendering. Please try again in a moment.');
+    throw new Error('Graf sa ešte vykresluje. Skúste to znova o chvíľu.');
   }
 
   const clonedSvg = svg.cloneNode(true) as SVGSVGElement;

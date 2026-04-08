@@ -64,8 +64,8 @@ export class TradeAnalysisService {
       }),
     });
 
-    const importSeries = buildSeries(IMPORT_LABEL, 'Imports');
-    const exportSeries = buildSeries(EXPORT_LABEL, 'Exports');
+    const importSeries = buildSeries(IMPORT_LABEL, 'Dovoz');
+    const exportSeries = buildSeries(EXPORT_LABEL, 'Vývoz');
 
     if (!importSeries.points.some((point) => point.value !== null)) {
       throw new BadRequestException('The DATAcube trade view returned no import totals.');

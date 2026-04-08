@@ -27,7 +27,7 @@ async function getErrorMessage(res: Response, fallback: string): Promise<string>
 export async function getCatalog(): Promise<CatalogEntry[]> {
   const res = await fetch('/api/catalog');
   if (!res.ok) {
-    throw new Error(await getErrorMessage(res, `Failed to fetch catalog: ${res.status}`));
+    throw new Error(await getErrorMessage(res, `Nepodarilo sa načítať katalóg: ${res.status}`));
   }
   return res.json();
 }
@@ -39,7 +39,7 @@ export async function analyze(catalogId: string, compareCountries: string[] = []
     body: JSON.stringify({ catalogId, compareCountries }),
   });
   if (!res.ok) {
-    throw new Error(await getErrorMessage(res, `Failed to analyze: ${res.status}`));
+    throw new Error(await getErrorMessage(res, `Analýza zlyhala: ${res.status}`));
   }
   return res.json();
 }
@@ -51,7 +51,7 @@ export async function analyzeGroceries(from: string, to: string): Promise<Grocer
     body: JSON.stringify({ from, to }),
   });
   if (!res.ok) {
-    throw new Error(await getErrorMessage(res, `Failed to analyze groceries: ${res.status}`));
+    throw new Error(await getErrorMessage(res, `Analýza potravín zlyhala: ${res.status}`));
   }
   return res.json();
 }
@@ -63,7 +63,7 @@ export async function analyzeRealEstate(from: string, to: string): Promise<RealE
     body: JSON.stringify({ from, to }),
   });
   if (!res.ok) {
-    throw new Error(await getErrorMessage(res, `Failed to analyze real estate: ${res.status}`));
+    throw new Error(await getErrorMessage(res, `Analýza nehnuteľností zlyhala: ${res.status}`));
   }
   return res.json();
 }
@@ -75,7 +75,7 @@ export async function analyzeTrade(from: string, to: string): Promise<TradeAnaly
     body: JSON.stringify({ from, to }),
   });
   if (!res.ok) {
-    throw new Error(await getErrorMessage(res, `Failed to analyze trade: ${res.status}`));
+    throw new Error(await getErrorMessage(res, `Analýza obchodu zlyhala: ${res.status}`));
   }
   return res.json();
 }
@@ -87,7 +87,7 @@ export async function analyzeWithAI(request: AiAnalysisRequest): Promise<AiAnaly
     body: JSON.stringify(request),
   });
   if (!res.ok) {
-    throw new Error(await getErrorMessage(res, `AI analysis failed: ${res.status}`));
+    throw new Error(await getErrorMessage(res, `AI analýza zlyhala: ${res.status}`));
   }
   return res.json();
 }
