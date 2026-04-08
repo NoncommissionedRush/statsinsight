@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { RealEstateAnalysisResponse, RealEstateMover } from '../types';
+import { copyChartHtml, downloadChartHtml, exportSvgChartAsHtml } from './chartExport';
 
 interface Props {
   data: RealEstateAnalysisResponse;
@@ -74,6 +76,8 @@ function renderMoverTable(title: string, movers: RealEstateMover[]) {
 }
 
 export function RealEstateInsights({ data }: Props) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
   const selectedRangeChanged =
     data.requestedFrom !== data.comparedFrom || data.requestedTo !== data.comparedTo;
   const propertyCards = [
@@ -87,6 +91,33 @@ export function RealEstateInsights({ data }: Props) {
     change: Number(mover.change.toFixed(2)),
     fill: mover.change >= 0 ? '#dc2626' : '#2563eb',
   }));
+  const exportTitle = `Real Estate Index Change Overview (${data.comparedFrom} to ${data.comparedTo})`;
+
+  const getExportHtml = () =>
+    exportSvgChartAsHtml({
+      container: chartRef.current,
+      title: exportTitle,
+      unit: 'index points',
+      seriesNames: chartMovers.map((mover) => mover.name),
+    });
+
+  const handleCopy = async () => {
+    try {
+      await copyChartHtml(getExportHtml());
+      setExportStatus('Embeddable HTML copied to clipboard.');
+    } catch (error) {
+      setExportStatus(error instanceof Error ? error.message : 'Failed to copy chart HTML.');
+    }
+  };
+
+  const handleDownload = () => {
+    try {
+      downloadChartHtml(getExportHtml(), exportTitle);
+      setExportStatus('HTML file downloaded.');
+    } catch (error) {
+      setExportStatus(error instanceof Error ? error.message : 'Failed to export chart HTML.');
+    }
+  };
 
   return (
     <section className="real-estate-section">
@@ -123,11 +154,22 @@ export function RealEstateInsights({ data }: Props) {
       </div>
 
       {chartMovers.length > 0 && (
-        <div className="real-estate-chart-card">
-          <div className="real-estate-chart-copy">
-            <h3>Index Change Overview</h3>
-            <p>Overall change across the tracked real-estate categories in the selected range.</p>
+        <div ref={chartRef} className="real-estate-chart-card">
+          <div className="mini-chart-header">
+            <div className="real-estate-chart-copy">
+              <h3>Index Change Overview</h3>
+              <p>Overall change across the tracked real-estate categories in the selected range.</p>
+            </div>
+            <div className="chart-actions">
+              <button type="button" className="chart-action" onClick={handleCopy}>
+                Copy HTML
+              </button>
+              <button type="button" className="chart-action" onClick={handleDownload}>
+                Download HTML
+              </button>
+            </div>
           </div>
+          {exportStatus && <p className="chart-export-status">{exportStatus}</p>}
           <div className="grocery-chart-wrap">
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={chartMovers} layout="vertical" margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>

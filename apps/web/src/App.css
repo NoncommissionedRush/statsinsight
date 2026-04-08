@@ -313,6 +313,14 @@ header .subtitle {
   margin-bottom: 0.75rem;
 }
 
+.mini-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
 .chart-container h2 {
   font-size: 1.1rem;
 }
