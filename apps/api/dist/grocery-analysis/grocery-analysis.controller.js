@@ -12,28 +12,28 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AnalyzeController = void 0;
+exports.GroceryAnalysisController = void 0;
 const common_1 = require("@nestjs/common");
-const analyze_service_1 = require("./analyze.service");
-let AnalyzeController = class AnalyzeController {
-    analyzeService;
-    constructor(analyzeService) {
-        this.analyzeService = analyzeService;
+const grocery_analysis_service_1 = require("./grocery-analysis.service");
+let GroceryAnalysisController = class GroceryAnalysisController {
+    groceryAnalysisService;
+    constructor(groceryAnalysisService) {
+        this.groceryAnalysisService = groceryAnalysisService;
     }
     analyze(body) {
-        return this.analyzeService.analyze(body.catalogId, body.compareCountries || []);
+        return this.groceryAnalysisService.analyze(body.from, body.to);
     }
 };
-exports.AnalyzeController = AnalyzeController;
+exports.GroceryAnalysisController = GroceryAnalysisController;
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], AnalyzeController.prototype, "analyze", null);
-exports.AnalyzeController = AnalyzeController = __decorate([
-    (0, common_1.Controller)('analyze'),
-    __metadata("design:paramtypes", [analyze_service_1.AnalyzeService])
-], AnalyzeController);
-//# sourceMappingURL=analyze.controller.js.map
+], GroceryAnalysisController.prototype, "analyze", null);
+exports.GroceryAnalysisController = GroceryAnalysisController = __decorate([
+    (0, common_1.Controller)('grocery-analysis'),
+    __metadata("design:paramtypes", [grocery_analysis_service_1.GroceryAnalysisService])
+], GroceryAnalysisController);
+//# sourceMappingURL=grocery-analysis.controller.js.map

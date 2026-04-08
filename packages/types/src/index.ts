@@ -56,10 +56,37 @@ export interface Insight {
 
 export interface AnalyzeRequest {
   catalogId: string;
+  compareCountries?: string[];
+}
+
+export interface GroceryAnalysisRequest {
+  from: string;
+  to: string;
+}
+
+export interface GroceryMover {
+  itemCode: string;
+  itemLabel: string;
+  unit: string;
+  startValue: number;
+  endValue: number;
+  change: number;
+  pctChange?: number;
+}
+
+export interface GroceryAnalysisResponse {
+  requestedFrom: string;
+  requestedTo: string;
+  comparedFrom: string;
+  comparedTo: string;
+  topIncrease: GroceryMover | null;
+  topDecrease: GroceryMover | null;
+  movers: GroceryMover[];
 }
 
 export interface AnalyzeResponse {
   series: TimeSeries;
+  compareSeries?: TimeSeries[];
   insights: Insight[];
   chart: ChartPayload;
 }

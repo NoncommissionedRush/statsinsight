@@ -39,6 +39,27 @@ export interface ChartPayload {
 
 export interface AnalyzeResponse {
   series: TimeSeries;
+  compareSeries?: TimeSeries[];
   insights: Insight[];
   chart: ChartPayload;
+}
+
+export interface GroceryMover {
+  itemCode: string;
+  itemLabel: string;
+  unit: string;
+  startValue: number;
+  endValue: number;
+  change: number;
+  pctChange?: number;
+}
+
+export interface GroceryAnalysisResponse {
+  requestedFrom: string;
+  requestedTo: string;
+  comparedFrom: string;
+  comparedTo: string;
+  topIncrease: GroceryMover | null;
+  topDecrease: GroceryMover | null;
+  movers: GroceryMover[];
 }

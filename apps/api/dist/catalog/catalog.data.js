@@ -28,6 +28,22 @@ exports.CATALOG = [
         },
     },
     {
+        id: 'eurostat:namq_10_gdp',
+        source: 'eurostat',
+        datasetCode: 'namq_10_gdp',
+        label: 'GDP Growth Rate (Quarterly) - Slovakia',
+        description: 'Gross domestic product at market prices, seasonally adjusted quarterly growth rate',
+        unit: '%',
+        defaultFilters: {
+            geo: 'SK',
+            lastTimePeriod: '24',
+            freq: 'Q',
+            na_item: 'B1GQ',
+            s_adj: 'SCA',
+            unit: 'CLV_PCH_PRE',
+        },
+    },
+    {
         id: 'eurostat:demo_pjan',
         source: 'eurostat',
         datasetCode: 'demo_pjan',

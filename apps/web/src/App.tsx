@@ -1,21 +1,39 @@
 import { useState, useEffect } from 'react';
-import { getCatalog, analyze } from './api';
+import { getCatalog, analyze, analyzeGroceries } from './api';
 import { buildChartPayload, computeInsights } from './analytics';
+import { CountryComparisonPicker } from './components/CountryComparisonPicker';
 import { DatasetPicker } from './components/DatasetPicker';
 import { ChartView } from './components/ChartView';
+import { GroceryInsights } from './components/GroceryInsights';
 import { InsightCards } from './components/InsightCards';
 import { TimeRangePicker } from './components/TimeRangePicker';
-import type { CatalogEntry, AnalyzeResponse } from './types';
+import { COUNTRY_OPTIONS } from './countries';
+import type { CatalogEntry, AnalyzeResponse, GroceryAnalysisResponse } from './types';
 import './App.css';
+
+const GROCERY_INSIGHTS_DATASET_ID = 'eurostat:prc_hicp_manr';
+const COUNTRY_COMPARISON_DATASET_IDS = new Set([
+  'eurostat:prc_hicp_manr',
+  'eurostat:une_rt_m',
+  'eurostat:namq_10_gdp',
+]);
 
 function App() {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [compareCountries, setCompareCountries] = useState<string[]>([]);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [groceryResult, setGroceryResult] = useState<GroceryAnalysisResponse | null>(null);
+  const [groceryLoading, setGroceryLoading] = useState(false);
+  const [groceryError, setGroceryError] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const selectedEntry = catalog.find((entry) => entry.id === selected) || null;
+  const showGroceryInsights = selected === GROCERY_INSIGHTS_DATASET_ID;
+  const showCountryComparison =
+    selectedEntry?.source === 'eurostat' && COUNTRY_COMPARISON_DATASET_IDS.has(selectedEntry.id);
 
   useEffect(() => {
     getCatalog()
@@ -34,20 +52,77 @@ function App() {
     setRangeEnd(result.series.points[result.series.points.length - 1].time);
   }, [result]);
 
-  const handleSelect = async (id: string) => {
+  const handleSelect = (id: string) => {
     setSelected(id);
+    setResult(null);
+    setGroceryResult(null);
+    setGroceryError(null);
+    setCompareCountries([]);
+  };
+
+  useEffect(() => {
+    if (!selected) return;
+
+    let cancelled = false;
     setLoading(true);
     setError(null);
-    setResult(null);
-    try {
-      const data = await analyze(id);
-      setResult(data);
-    } catch (e: any) {
-      setError(`Analysis failed: ${e.message}`);
-    } finally {
-      setLoading(false);
+
+    analyze(selected, compareCountries)
+      .then((data) => {
+        if (!cancelled) {
+          setResult(data);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) {
+          setError(`Analysis failed: ${e.message}`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, compareCountries]);
+
+  useEffect(() => {
+    if (!result || !rangeStart || !rangeEnd || !showGroceryInsights) {
+      setGroceryResult(null);
+      setGroceryError(null);
+      setGroceryLoading(false);
+      return;
     }
-  };
+
+    let cancelled = false;
+    setGroceryLoading(true);
+    setGroceryError(null);
+
+    analyzeGroceries(rangeStart, rangeEnd)
+      .then((data) => {
+        if (!cancelled) {
+          setGroceryResult(data);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) {
+          setGroceryResult(null);
+          setGroceryError(`Grocery analysis unavailable: ${e.message}`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setGroceryLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result, rangeStart, rangeEnd, showGroceryInsights]);
 
   const rangeOptions = result?.series.points.map((point) => ({
     value: point.time,
@@ -73,6 +148,22 @@ function App() {
           ...result.series,
           points: filteredPoints,
         },
+        compareSeries: result.compareSeries?.map((series) => {
+          const compareStartIndex = rangeStart
+            ? series.points.findIndex((point) => point.time === rangeStart)
+            : 0;
+          const compareEndIndex = rangeEnd
+            ? series.points.findIndex((point) => point.time === rangeEnd)
+            : series.points.length - 1;
+
+          return {
+            ...series,
+            points:
+              compareStartIndex >= 0 && compareEndIndex >= compareStartIndex
+                ? series.points.slice(compareStartIndex, compareEndIndex + 1)
+                : series.points,
+          };
+        }),
         chart: buildChartPayload({
           ...result.series,
           points: filteredPoints,
@@ -109,6 +200,14 @@ function App() {
     }
   };
 
+  const handleCountryToggle = (code: string) => {
+    setCompareCountries((current) =>
+      current.includes(code)
+        ? current.filter((item) => item !== code)
+        : [...current, code],
+    );
+  };
+
   return (
     <div className="app">
       <header>
@@ -124,7 +223,7 @@ function App() {
           onSelect={handleSelect}
         />
 
-        {loading && (
+        {loading && !result && (
           <div className="loading">
             <div className="spinner" />
             <p>Fetching and analyzing data...</p>
@@ -133,8 +232,18 @@ function App() {
 
         {error && <div className="error">{error}</div>}
 
-        {result && filteredResult && !loading && rangeStart && rangeEnd && (
+        {result && filteredResult && rangeStart && rangeEnd && (
           <div className="results">
+            {showCountryComparison && (
+              <CountryComparisonPicker
+                options={COUNTRY_OPTIONS}
+                selected={compareCountries}
+                onToggle={handleCountryToggle}
+              />
+            )}
+
+            {loading && <p className="results-status">Updating comparison data...</p>}
+
             <TimeRangePicker
               options={rangeOptions}
               from={rangeStart}
@@ -145,8 +254,16 @@ function App() {
               onToChange={handleRangeEndChange}
             />
 
-            <ChartView chart={filteredResult.chart} />
+            <ChartView chart={filteredResult.chart} compareSeries={filteredResult.compareSeries} />
             <InsightCards insights={filteredResult.insights} />
+
+            {showGroceryInsights && (
+              <section className="groceries-shell">
+                {groceryLoading && <p className="groceries-status">Analyzing grocery price movers...</p>}
+                {groceryError && <p className="groceries-status error-text">{groceryError}</p>}
+                {groceryResult && !groceryLoading && <GroceryInsights data={groceryResult} />}
+              </section>
+            )}
 
             <details className="raw-data">
               <summary>Raw data ({filteredResult.series.points.length} data points)</summary>

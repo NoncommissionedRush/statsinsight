@@ -1,0 +1,32 @@
+export const COUNTRY_OPTIONS = [
+  { code: 'AT', label: 'Austria' },
+  { code: 'BE', label: 'Belgium' },
+  { code: 'BG', label: 'Bulgaria' },
+  { code: 'CY', label: 'Cyprus' },
+  { code: 'CZ', label: 'Czechia' },
+  { code: 'DE', label: 'Germany' },
+  { code: 'DK', label: 'Denmark' },
+  { code: 'EE', label: 'Estonia' },
+  { code: 'EL', label: 'Greece' },
+  { code: 'ES', label: 'Spain' },
+  { code: 'FI', label: 'Finland' },
+  { code: 'FR', label: 'France' },
+  { code: 'HR', label: 'Croatia' },
+  { code: 'HU', label: 'Hungary' },
+  { code: 'IE', label: 'Ireland' },
+  { code: 'IT', label: 'Italy' },
+  { code: 'LT', label: 'Lithuania' },
+  { code: 'LU', label: 'Luxembourg' },
+  { code: 'LV', label: 'Latvia' },
+  { code: 'MT', label: 'Malta' },
+  { code: 'NL', label: 'Netherlands' },
+  { code: 'PL', label: 'Poland' },
+  { code: 'PT', label: 'Portugal' },
+  { code: 'RO', label: 'Romania' },
+  { code: 'SE', label: 'Sweden' },
+  { code: 'SI', label: 'Slovenia' },
+] as const;
+
+export const COUNTRY_LABELS = Object.fromEntries(
+  COUNTRY_OPTIONS.map((option) => [option.code, option.label]),
+) as Record<string, string>;

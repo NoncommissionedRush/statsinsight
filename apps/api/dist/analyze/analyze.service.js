@@ -15,6 +15,11 @@ const connectors_1 = require("@statinsight/connectors");
 const analytics_1 = require("@statinsight/analytics");
 const catalog_service_1 = require("../catalog/catalog.service");
 const cache_service_1 = require("../cache/cache.service");
+const COUNTRY_COMPARISON_DATASET_IDS = new Set([
+    'eurostat:prc_hicp_manr',
+    'eurostat:une_rt_m',
+    'eurostat:namq_10_gdp',
+]);
 let AnalyzeService = class AnalyzeService {
     catalog;
     cache;
@@ -22,19 +27,22 @@ let AnalyzeService = class AnalyzeService {
         this.catalog = catalog;
         this.cache = cache;
     }
-    async analyze(catalogId) {
+    async analyze(catalogId, compareCountries = []) {
         const entry = this.catalog.findById(catalogId);
         if (!entry) {
             throw new common_1.NotFoundException(`Dataset "${catalogId}" not found in catalog`);
         }
-        const cacheKey = `analyze:${catalogId}`;
+        const normalizedCompareCountries = this.normalizeCompareCountries(compareCountries);
+        const cacheKey = `analyze:${catalogId}:${normalizedCompareCountries.join(',')}`;
         const cached = this.cache.get(cacheKey);
         if (cached)
             return cached;
         let series;
+        let compareSeries;
         try {
             if (entry.source === 'eurostat') {
                 series = await (0, connectors_1.fetchEurostat)(entry.datasetCode, entry.defaultFilters);
+                compareSeries = await this.fetchCompareSeries(entry, normalizedCompareCountries);
             }
             else if (entry.source === 'susr') {
                 if (!entry.susrConfig) {
@@ -53,9 +61,32 @@ let AnalyzeService = class AnalyzeService {
         series.unit = entry.unit;
         const insights = (0, analytics_1.computeInsights)(series.points, series.unit);
         const chart = (0, analytics_1.buildChartPayload)(series);
-        const response = { series, insights, chart };
+        const response = { series, compareSeries, insights, chart };
         this.cache.set(cacheKey, response);
         return response;
+    }
+    async fetchCompareSeries(entry, countries) {
+        if (!entry || entry.source !== 'eurostat')
+            return undefined;
+        if (!COUNTRY_COMPARISON_DATASET_IDS.has(entry.id))
+            return undefined;
+        if (countries.length === 0)
+            return undefined;
+        const baseGeo = entry.defaultFilters.geo;
+        const compareGeos = countries.filter((country) => country !== baseGeo);
+        if (compareGeos.length === 0)
+            return undefined;
+        const seriesList = await Promise.all(compareGeos.map(async (geo) => {
+            const filters = { ...entry.defaultFilters, geo };
+            const series = await (0, connectors_1.fetchEurostat)(entry.datasetCode, filters);
+            series.datasetLabel = `${entry.label.replace(' - Slovakia', '')} - ${geo}`;
+            series.unit = entry.unit;
+            return series;
+        }));
+        return seriesList;
+    }
+    normalizeCompareCountries(countries) {
+        return [...new Set(countries.map((country) => country.trim().toUpperCase()).filter(Boolean))].sort();
     }
 };
 exports.AnalyzeService = AnalyzeService;

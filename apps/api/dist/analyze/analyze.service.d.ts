@@ -5,5 +5,7 @@ export declare class AnalyzeService {
     private readonly catalog;
     private readonly cache;
     constructor(catalog: CatalogService, cache: CacheService);
-    analyze(catalogId: string): Promise<AnalyzeResponse>;
+    analyze(catalogId: string, compareCountries?: string[]): Promise<AnalyzeResponse>;
+    private fetchCompareSeries;
+    private normalizeCompareCountries;
 }

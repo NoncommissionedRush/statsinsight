@@ -8,6 +8,6 @@ export class AnalyzeController {
 
   @Post()
   analyze(@Body() body: AnalyzeRequest) {
-    return this.analyzeService.analyze(body.catalogId);
+    return this.analyzeService.analyze(body.catalogId, body.compareCountries || []);
   }
 }

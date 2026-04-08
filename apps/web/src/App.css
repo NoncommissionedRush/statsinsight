@@ -149,6 +149,101 @@ header .subtitle {
   margin-top: 1rem;
 }
 
+.results-status {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: -0.5rem 0 1rem;
+}
+
+.comparison-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.comparison-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.comparison-summary::-webkit-details-marker {
+  display: none;
+}
+
+.comparison-summary-copy h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.comparison-summary-copy p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.comparison-summary-toggle {
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.comparison-card[open] .comparison-summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-body {
+  padding: 1rem 1.5rem 1.25rem;
+}
+
+.comparison-copy {
+  margin-bottom: 1rem;
+}
+
+.comparison-copy p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.comparison-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.comparison-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.comparison-pill.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.comparison-pill.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.comparison-pill input {
+  margin: 0;
+}
+
 /* Time Range */
 .time-range-card {
   background: var(--card-bg);
@@ -215,6 +310,85 @@ header .subtitle {
   margin-bottom: 1rem;
 }
 
+.groceries-section {
+  margin-bottom: 1.5rem;
+}
+
+.groceries-header {
+  margin-bottom: 1rem;
+}
+
+.groceries-header h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.groceries-header p,
+.grocery-card p,
+.grocery-chart-copy p {
+  color: var(--text-muted);
+}
+
+.groceries-note {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.grocery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.grocery-grid-four {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.grocery-card,
+.grocery-chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.grocery-card h3,
+.grocery-table-block h3,
+.grocery-chart-copy h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.45rem;
+}
+
+.grocery-card strong {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.grocery-chart-card {
+  margin-bottom: 1rem;
+}
+
+.grocery-chart-copy {
+  margin-bottom: 0.75rem;
+}
+
+.grocery-chart-wrap {
+  width: 100%;
+  height: 320px;
+}
+
+.grocery-tables {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.grocery-table-block {
+  overflow-x: auto;
+}
+
 /* Insights */
 .insights h2 {
   font-size: 1.25rem;
@@ -272,6 +446,72 @@ header .subtitle {
   color: var(--text-muted);
   font-style: italic;
   padding: 1rem 0;
+}
+
+.groceries-shell {
+  margin-bottom: 1.5rem;
+}
+
+.groceries-status {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  color: var(--text-muted);
+}
+
+.error-text {
+  color: var(--error);
+}
+
+.groceries-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.groceries-header {
+  margin-bottom: 1rem;
+}
+
+.groceries-header h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.groceries-header p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.grocery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.grocery-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--bg);
+}
+
+.grocery-card h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.grocery-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.grocery-card p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 /* Raw data */

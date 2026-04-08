@@ -12,12 +12,13 @@ const catalog_module_1 = require("./catalog/catalog.module");
 const analyze_module_1 = require("./analyze/analyze.module");
 const cache_module_1 = require("./cache/cache.module");
 const health_controller_1 = require("./health/health.controller");
+const grocery_analysis_module_1 = require("./grocery-analysis/grocery-analysis.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [catalog_module_1.CatalogModule, analyze_module_1.AnalyzeModule, cache_module_1.CacheModule],
+        imports: [catalog_module_1.CatalogModule, analyze_module_1.AnalyzeModule, cache_module_1.CacheModule, grocery_analysis_module_1.GroceryAnalysisModule],
         controllers: [health_controller_1.HealthController],
     })
 ], AppModule);
