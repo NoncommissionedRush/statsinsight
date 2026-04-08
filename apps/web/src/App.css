@@ -305,9 +305,45 @@ header .subtitle {
   margin-bottom: 1.5rem;
 }
 
+.chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
 .chart-container h2 {
   font-size: 1.1rem;
-  margin-bottom: 1rem;
+}
+
+.chart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chart-action {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.chart-action:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.chart-export-status {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
 }
 
 .groceries-section {
