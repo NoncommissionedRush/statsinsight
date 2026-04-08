@@ -1,0 +1,15 @@
+{
+  "name": "statinsight",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build:packages": "npm -w packages/types run build && npm -w packages/connectors run build && npm -w packages/analytics run build",
+    "dev:api": "npm run build:packages && npm -w apps/api run start:dev",
+    "dev:web": "npm -w apps/web run dev",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.0"
+  }
+}

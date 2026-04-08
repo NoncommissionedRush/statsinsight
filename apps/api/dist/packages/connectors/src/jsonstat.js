@@ -1,0 +1,100 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.parseJsonStat = parseJsonStat;
+exports.detectTimeDimensions = detectTimeDimensions;
+function getValueAtIndex(raw, flat) {
+    const val = Array.isArray(raw.value) ? raw.value[flat] : raw.value[String(flat)];
+    return val !== undefined && val !== null ? Number(val) : null;
+}
+function getDimCodes(dim) {
+    const catIndex = dim.category.index;
+    if (Array.isArray(catIndex))
+        return catIndex;
+    return Object.keys(catIndex).sort((a, b) => catIndex[a] - catIndex[b]);
+}
+function getDimIndex(dim, code) {
+    const catIndex = dim.category.index;
+    if (Array.isArray(catIndex))
+        return catIndex.indexOf(code);
+    return catIndex[code];
+}
+function parseJsonStat(raw, opts) {
+    const ids = raw.id;
+    const sizes = raw.size;
+    const dims = raw.dimension;
+    if (!ids || !sizes || !dims) {
+        throw new Error('Invalid JSON-stat response: missing id, size, or dimension');
+    }
+    const timeDimPositions = opts.timeDimIds.map((id) => {
+        const pos = ids.indexOf(id);
+        if (pos === -1)
+            throw new Error(`Dimension "${id}" not found in: ${ids.join(', ')}`);
+        return pos;
+    });
+    const timeDimSet = new Set(timeDimPositions);
+    const fixedIndices = ids.map((id, i) => {
+        if (timeDimSet.has(i))
+            return -1;
+        const dim = dims[id];
+        const catIndex = dim.category.index;
+        if (opts.fixedDims[id] !== undefined) {
+            const idx = typeof catIndex === 'object' && !Array.isArray(catIndex)
+                ? catIndex[opts.fixedDims[id]]
+                : undefined;
+            if (idx !== undefined)
+                return idx;
+        }
+        return Array.isArray(catIndex) ? 0 : catIndex[Object.keys(catIndex)[0]] ?? 0;
+    });
+    const timeDimCodes = opts.timeDimIds.map((id) => getDimCodes(dims[id]));
+    function cartesian(arrays) {
+        if (arrays.length === 0)
+            return [[]];
+        const [first, ...rest] = arrays;
+        const restProduct = cartesian(rest);
+        return first.flatMap((val) => restProduct.map((arr) => [val, ...arr]));
+    }
+    const timeCombinations = cartesian(timeDimCodes);
+    const points = [];
+    for (const combo of timeCombinations) {
+        const indices = [...fixedIndices];
+        for (let t = 0; t < opts.timeDimIds.length; t++) {
+            indices[timeDimPositions[t]] = getDimIndex(dims[opts.timeDimIds[t]], combo[t]);
+        }
+        let flat = 0;
+        for (let d = 0; d < ids.length; d++) {
+            flat = flat * sizes[d] + indices[d];
+        }
+        const val = getValueAtIndex(raw, flat);
+        const timeStr = combo.length === 1 ? combo[0] : combo.join('-');
+        const labels = combo.map((code, t) => {
+            const dimLabels = dims[opts.timeDimIds[t]].category?.label;
+            return dimLabels?.[code] || code;
+        });
+        const label = labels.join(' ');
+        points.push({ time: timeStr, value: val, label });
+    }
+    points.sort((a, b) => a.time.localeCompare(b.time));
+    return points;
+}
+function detectTimeDimensions(raw) {
+    if (raw.role?.time?.length) {
+        return raw.role.time;
+    }
+    const ids = raw.id || [];
+    const timeDims = [];
+    for (const id of ids) {
+        if (/_rok$/i.test(id))
+            timeDims.push(id);
+    }
+    for (const id of ids) {
+        if (/_stv$/i.test(id) || /_kvar$/i.test(id) || /_mes$/i.test(id))
+            timeDims.push(id);
+    }
+    if (timeDims.length > 0)
+        return timeDims;
+    if (ids.length > 0)
+        return [ids[ids.length - 1]];
+    throw new Error('Cannot detect time dimension');
+}
+//# sourceMappingURL=jsonstat.js.map

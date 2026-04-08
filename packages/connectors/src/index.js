@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.detectTimeDimensions = exports.parseJsonStat = exports.fetchSusr = exports.fetchEurostat = void 0;
+var eurostat_1 = require("./eurostat");
+Object.defineProperty(exports, "fetchEurostat", { enumerable: true, get: function () { return eurostat_1.fetchEurostat; } });
+var susr_1 = require("./susr");
+Object.defineProperty(exports, "fetchSusr", { enumerable: true, get: function () { return susr_1.fetchSusr; } });
+var jsonstat_1 = require("./jsonstat");
+Object.defineProperty(exports, "parseJsonStat", { enumerable: true, get: function () { return jsonstat_1.parseJsonStat; } });
+Object.defineProperty(exports, "detectTimeDimensions", { enumerable: true, get: function () { return jsonstat_1.detectTimeDimensions; } });
+//# sourceMappingURL=index.js.map
