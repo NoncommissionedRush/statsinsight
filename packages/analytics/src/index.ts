@@ -4,7 +4,11 @@ function formatDeltaUnit(unit?: string): string {
   return unit === '%' ? ' percentage points' : '';
 }
 
-function periodDelta(points: TimePoint[], unit?: string): Insight | null {
+function subjectLabel(subject?: string): string {
+  return subject || 'Value';
+}
+
+function periodDelta(points: TimePoint[], unit?: string, subject?: string): Insight | null {
   if (points.length < 2) return null;
   const curr = points[points.length - 1];
   const prev = points[points.length - 2];
@@ -16,13 +20,13 @@ function periodDelta(points: TimePoint[], unit?: string): Insight | null {
   return {
     kind: 'period_delta',
     title: 'Latest Change',
-    description: `Value ${direction} by ${Math.abs(delta).toFixed(2)}${formatDeltaUnit(unit)} from ${prev.label || prev.time} to ${curr.label || curr.time}.`,
+    description: `${subjectLabel(subject)} ${direction} by ${Math.abs(delta).toFixed(2)}${formatDeltaUnit(unit)} from ${prev.label || prev.time} to ${curr.label || curr.time}.`,
     value: delta,
     period: curr.time,
   };
 }
 
-function averageChange(points: TimePoint[], unit?: string): Insight | null {
+function averageChange(points: TimePoint[], unit?: string, subject?: string): Insight | null {
   if (points.length < 2) return null;
 
   const deltas: number[] = [];
@@ -41,13 +45,13 @@ function averageChange(points: TimePoint[], unit?: string): Insight | null {
   return {
     kind: 'average_change',
     title: 'Average Change',
-    description: `Average ${direction} per period was ${Math.abs(avgDelta).toFixed(2)}${formatDeltaUnit(unit)} across the selected range.`,
+    description: `Average ${subject ? subject.toLowerCase() + ' ' : ''}${direction} per period was ${Math.abs(avgDelta).toFixed(2)}${formatDeltaUnit(unit)} across the selected range.`,
     value: avgDelta,
     period: points[points.length - 1].time,
   };
 }
 
-function pctChange(points: TimePoint[]): Insight | null {
+function pctChange(points: TimePoint[], subject?: string): Insight | null {
   if (points.length < 2) return null;
   const curr = points[points.length - 1];
   const prev = points[points.length - 2];
@@ -59,13 +63,13 @@ function pctChange(points: TimePoint[]): Insight | null {
   return {
     kind: 'pct_change',
     title: 'Percentage Change',
-    description: `${direction === 'up' ? 'Up' : 'Down'} ${Math.abs(pct).toFixed(1)}% from the previous period.`,
+    description: `${subjectLabel(subject)} was ${direction === 'up' ? 'up' : 'down'} ${Math.abs(pct).toFixed(1)}% from the previous period.`,
     value: pct,
     period: curr.time,
   };
 }
 
-function rollingAvgDeviation(points: TimePoint[], window = 6): Insight | null {
+function rollingAvgDeviation(points: TimePoint[], window = 6, subject?: string): Insight | null {
   const valid = points.filter((p) => p.value !== null);
   if (valid.length < window + 1) return null;
 
@@ -89,13 +93,13 @@ function rollingAvgDeviation(points: TimePoint[], window = 6): Insight | null {
   return {
     kind: 'rolling_avg_deviation',
     title: 'Rolling Average Deviation',
-    description: `Current value is ${Math.abs(deviation).toFixed(1)} standard deviations ${direction} the ${window}-period average (${avg.toFixed(2)}).`,
+    description: `Current ${subject ? subject.toLowerCase() : 'value'} is ${Math.abs(deviation).toFixed(1)} standard deviations ${direction} the ${window}-period average (${avg.toFixed(2)}).`,
     value: deviation,
     period: latest.time,
   };
 }
 
-function trendReversal(points: TimePoint[]): Insight | null {
+function trendReversal(points: TimePoint[], subject?: string): Insight | null {
   const valid = points.filter((p) => p.value !== null);
   if (valid.length < 4) return null;
 
@@ -117,12 +121,12 @@ function trendReversal(points: TimePoint[]): Insight | null {
   return {
     kind: 'trend_reversal',
     title: 'Trend Reversal Detected',
-    description: `Trend reversed from ${direction} at ${recent[recent.length - 1].label || recent[recent.length - 1].time}.`,
+    description: `${subjectLabel(subject)} trend reversed from ${direction} at ${recent[recent.length - 1].label || recent[recent.length - 1].time}.`,
     period: recent[recent.length - 1].time,
   };
 }
 
-function largestMove(points: TimePoint[], unit?: string): Insight | null {
+function largestMove(points: TimePoint[], unit?: string, subject?: string): Insight | null {
   const valid = points.filter((p) => p.value !== null);
   if (valid.length < 2) return null;
 
@@ -147,28 +151,28 @@ function largestMove(points: TimePoint[], unit?: string): Insight | null {
   return {
     kind: 'largest_move',
     title: 'Largest Move in Range',
-    description: `${direction}${delta.toFixed(2)}${formatDeltaUnit(unit)} between ${from.label || from.time} and ${to.label || to.time}.`,
+    description: `${subjectLabel(subject)} moved ${direction}${delta.toFixed(2)}${formatDeltaUnit(unit)} between ${from.label || from.time} and ${to.label || to.time}.`,
     value: delta,
     period: to.time,
   };
 }
 
-export function computeInsights(points: TimePoint[], unit?: string): Insight[] {
+export function computeInsights(points: TimePoint[], unit?: string, subject?: string): Insight[] {
   const valid = points.filter((p) => p.value !== null);
   if (valid.length < 2) return [];
 
   const insights: Insight[] = [];
-  const fns: Array<(points: TimePoint[], unit?: string) => Insight | null> = [
+  const fns: Array<(points: TimePoint[], unit?: string, subject?: string) => Insight | null> = [
     periodDelta,
     averageChange,
-    (seriesPoints) => pctChange(seriesPoints),
-    (seriesPoints) => rollingAvgDeviation(seriesPoints),
-    (seriesPoints) => trendReversal(seriesPoints),
+    (seriesPoints, _unit, seriesSubject) => pctChange(seriesPoints, seriesSubject),
+    (seriesPoints, _unit, seriesSubject) => rollingAvgDeviation(seriesPoints, 6, seriesSubject),
+    (seriesPoints, _unit, seriesSubject) => trendReversal(seriesPoints, seriesSubject),
     largestMove,
   ];
 
   for (const fn of fns) {
-    const result = fn(valid, unit);
+    const result = fn(valid, unit, subject);
     if (result) insights.push(result);
   }
 
@@ -181,5 +185,8 @@ export function buildChartPayload(series: TimeSeries): ChartPayload {
     values: series.points.map((p) => p.value),
     unit: series.unit,
     title: series.datasetLabel,
+    primarySeriesName:
+      series.dimensions.displaySeries ||
+      (series.dimensions.geo === 'SK' ? 'Slovakia' : series.datasetLabel),
   };
 }

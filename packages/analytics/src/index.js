@@ -5,7 +5,10 @@ exports.buildChartPayload = buildChartPayload;
 function formatDeltaUnit(unit) {
     return unit === '%' ? ' percentage points' : '';
 }
-function periodDelta(points, unit) {
+function subjectLabel(subject) {
+    return subject || 'Value';
+}
+function periodDelta(points, unit, subject) {
     if (points.length < 2)
         return null;
     const curr = points[points.length - 1];
@@ -17,12 +20,12 @@ function periodDelta(points, unit) {
     return {
         kind: 'period_delta',
         title: 'Latest Change',
-        description: `Value ${direction} by ${Math.abs(delta).toFixed(2)}${formatDeltaUnit(unit)} from ${prev.label || prev.time} to ${curr.label || curr.time}.`,
+        description: `${subjectLabel(subject)} ${direction} by ${Math.abs(delta).toFixed(2)}${formatDeltaUnit(unit)} from ${prev.label || prev.time} to ${curr.label || curr.time}.`,
         value: delta,
         period: curr.time,
     };
 }
-function averageChange(points, unit) {
+function averageChange(points, unit, subject) {
     if (points.length < 2)
         return null;
     const deltas = [];
@@ -40,12 +43,12 @@ function averageChange(points, unit) {
     return {
         kind: 'average_change',
         title: 'Average Change',
-        description: `Average ${direction} per period was ${Math.abs(avgDelta).toFixed(2)}${formatDeltaUnit(unit)} across the selected range.`,
+        description: `Average ${subject ? subject.toLowerCase() + ' ' : ''}${direction} per period was ${Math.abs(avgDelta).toFixed(2)}${formatDeltaUnit(unit)} across the selected range.`,
         value: avgDelta,
         period: points[points.length - 1].time,
     };
 }
-function pctChange(points) {
+function pctChange(points, subject) {
     if (points.length < 2)
         return null;
     const curr = points[points.length - 1];
@@ -57,12 +60,12 @@ function pctChange(points) {
     return {
         kind: 'pct_change',
         title: 'Percentage Change',
-        description: `${direction === 'up' ? 'Up' : 'Down'} ${Math.abs(pct).toFixed(1)}% from the previous period.`,
+        description: `${subjectLabel(subject)} was ${direction === 'up' ? 'up' : 'down'} ${Math.abs(pct).toFixed(1)}% from the previous period.`,
         value: pct,
         period: curr.time,
     };
 }
-function rollingAvgDeviation(points, window = 6) {
+function rollingAvgDeviation(points, window = 6, subject) {
     const valid = points.filter((p) => p.value !== null);
     if (valid.length < window + 1)
         return null;
@@ -82,12 +85,12 @@ function rollingAvgDeviation(points, window = 6) {
     return {
         kind: 'rolling_avg_deviation',
         title: 'Rolling Average Deviation',
-        description: `Current value is ${Math.abs(deviation).toFixed(1)} standard deviations ${direction} the ${window}-period average (${avg.toFixed(2)}).`,
+        description: `Current ${subject ? subject.toLowerCase() : 'value'} is ${Math.abs(deviation).toFixed(1)} standard deviations ${direction} the ${window}-period average (${avg.toFixed(2)}).`,
         value: deviation,
         period: latest.time,
     };
 }
-function trendReversal(points) {
+function trendReversal(points, subject) {
     const valid = points.filter((p) => p.value !== null);
     if (valid.length < 4)
         return null;
@@ -104,11 +107,11 @@ function trendReversal(points) {
     return {
         kind: 'trend_reversal',
         title: 'Trend Reversal Detected',
-        description: `Trend reversed from ${direction} at ${recent[recent.length - 1].label || recent[recent.length - 1].time}.`,
+        description: `${subjectLabel(subject)} trend reversed from ${direction} at ${recent[recent.length - 1].label || recent[recent.length - 1].time}.`,
         period: recent[recent.length - 1].time,
     };
 }
-function largestMove(points, unit) {
+function largestMove(points, unit, subject) {
     const valid = points.filter((p) => p.value !== null);
     if (valid.length < 2)
         return null;
@@ -130,12 +133,12 @@ function largestMove(points, unit) {
     return {
         kind: 'largest_move',
         title: 'Largest Move in Range',
-        description: `${direction}${delta.toFixed(2)}${formatDeltaUnit(unit)} between ${from.label || from.time} and ${to.label || to.time}.`,
+        description: `${subjectLabel(subject)} moved ${direction}${delta.toFixed(2)}${formatDeltaUnit(unit)} between ${from.label || from.time} and ${to.label || to.time}.`,
         value: delta,
         period: to.time,
     };
 }
-function computeInsights(points, unit) {
+function computeInsights(points, unit, subject) {
     const valid = points.filter((p) => p.value !== null);
     if (valid.length < 2)
         return [];
@@ -143,13 +146,13 @@ function computeInsights(points, unit) {
     const fns = [
         periodDelta,
         averageChange,
-        (seriesPoints) => pctChange(seriesPoints),
-        (seriesPoints) => rollingAvgDeviation(seriesPoints),
-        (seriesPoints) => trendReversal(seriesPoints),
+        (seriesPoints, _unit, seriesSubject) => pctChange(seriesPoints, seriesSubject),
+        (seriesPoints, _unit, seriesSubject) => rollingAvgDeviation(seriesPoints, 6, seriesSubject),
+        (seriesPoints, _unit, seriesSubject) => trendReversal(seriesPoints, seriesSubject),
         largestMove,
     ];
     for (const fn of fns) {
-        const result = fn(valid, unit);
+        const result = fn(valid, unit, subject);
         if (result)
             insights.push(result);
     }
@@ -161,6 +164,8 @@ function buildChartPayload(series) {
         values: series.points.map((p) => p.value),
         unit: series.unit,
         title: series.datasetLabel,
+        primarySeriesName: series.dimensions.displaySeries ||
+            (series.dimensions.geo === 'SK' ? 'Slovakia' : series.datasetLabel),
     };
 }
 //# sourceMappingURL=index.js.map

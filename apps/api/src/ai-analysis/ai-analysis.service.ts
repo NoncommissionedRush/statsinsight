@@ -4,6 +4,7 @@ import type {
   AiAnalysisRequest,
   GroceryMover,
   RealEstateMover,
+  TradeMover,
   Insight,
   TimeSeries,
   TimePoint,
@@ -77,6 +78,22 @@ Number of data points: ${validPoints.length}
     req.realEstateMovers.forEach((m: RealEstateMover) => {
       const pct = m.pctChange != null ? ` (${m.pctChange > 0 ? '+' : ''}${m.pctChange.toFixed(1)}%)` : '';
       prompt += `- ${m.propertyLabel}: ${m.startValue} → ${m.endValue}${pct}\n`;
+    });
+  }
+
+  if (req.tradeImportMovers && req.tradeImportMovers.length > 0) {
+    prompt += `\nImport category changes:\n`;
+    req.tradeImportMovers.slice(0, 5).forEach((m: TradeMover) => {
+      const pct = m.pctChange != null ? ` (${m.pctChange > 0 ? '+' : ''}${m.pctChange.toFixed(1)}%)` : '';
+      prompt += `- ${m.categoryLabel}: ${m.startValue} → ${m.endValue} mil. EUR${pct}\n`;
+    });
+  }
+
+  if (req.tradeExportMovers && req.tradeExportMovers.length > 0) {
+    prompt += `\nExport category changes:\n`;
+    req.tradeExportMovers.slice(0, 5).forEach((m: TradeMover) => {
+      const pct = m.pctChange != null ? ` (${m.pctChange > 0 ? '+' : ''}${m.pctChange.toFixed(1)}%)` : '';
+      prompt += `- ${m.categoryLabel}: ${m.startValue} → ${m.endValue} mil. EUR${pct}\n`;
     });
   }
 

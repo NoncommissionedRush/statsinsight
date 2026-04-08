@@ -71,6 +71,20 @@ Number of data points: ${validPoints.length}
             prompt += `- ${m.propertyLabel}: ${m.startValue} → ${m.endValue}${pct}\n`;
         });
     }
+    if (req.tradeImportMovers && req.tradeImportMovers.length > 0) {
+        prompt += `\nImport category changes:\n`;
+        req.tradeImportMovers.slice(0, 5).forEach((m) => {
+            const pct = m.pctChange != null ? ` (${m.pctChange > 0 ? '+' : ''}${m.pctChange.toFixed(1)}%)` : '';
+            prompt += `- ${m.categoryLabel}: ${m.startValue} → ${m.endValue} mil. EUR${pct}\n`;
+        });
+    }
+    if (req.tradeExportMovers && req.tradeExportMovers.length > 0) {
+        prompt += `\nExport category changes:\n`;
+        req.tradeExportMovers.slice(0, 5).forEach((m) => {
+            const pct = m.pctChange != null ? ` (${m.pctChange > 0 ? '+' : ''}${m.pctChange.toFixed(1)}%)` : '';
+            prompt += `- ${m.categoryLabel}: ${m.startValue} → ${m.endValue} mil. EUR${pct}\n`;
+        });
+    }
     prompt += `
 In 3-5 sentences in Slovak language, provide a high-level analysis of what this data shows. Where relevant, mention what world events, economic policies, or regional factors might explain the observed trends. Be concise and accessible to a general audience. Do not use any markdown formatting — respond with plain text only.`;
     return prompt;

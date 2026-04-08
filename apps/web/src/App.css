@@ -476,6 +476,12 @@ header .subtitle {
   margin-bottom: 1rem;
 }
 
+.trade-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
 .insight-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

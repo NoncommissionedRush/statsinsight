@@ -16,6 +16,7 @@ const analytics_1 = require("@statinsight/analytics");
 const catalog_service_1 = require("../catalog/catalog.service");
 const cache_service_1 = require("../cache/cache.service");
 const real_estate_analysis_service_1 = require("../real-estate-analysis/real-estate-analysis.service");
+const trade_analysis_service_1 = require("../trade-analysis/trade-analysis.service");
 const COUNTRY_COMPARISON_DATASET_IDS = new Set([
     'eurostat:prc_hicp_manr',
     'eurostat:une_rt_m',
@@ -25,10 +26,12 @@ let AnalyzeService = class AnalyzeService {
     catalog;
     cache;
     realEstateAnalysis;
-    constructor(catalog, cache, realEstateAnalysis) {
+    tradeAnalysis;
+    constructor(catalog, cache, realEstateAnalysis, tradeAnalysis) {
         this.catalog = catalog;
         this.cache = cache;
         this.realEstateAnalysis = realEstateAnalysis;
+        this.tradeAnalysis = tradeAnalysis;
     }
     async analyze(catalogId, compareCountries = []) {
         const entry = this.catalog.findById(catalogId);
@@ -48,7 +51,17 @@ let AnalyzeService = class AnalyzeService {
                 compareSeries = await this.fetchCompareSeries(entry, normalizedCompareCountries);
             }
             else if (entry.source === 'datacube') {
-                series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
+                if (entry.id === 'datacube:sp1002qs') {
+                    series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
+                }
+                else if (entry.id === 'datacube:zo0020ms') {
+                    const tradeData = await this.tradeAnalysis.buildTradeSeries(entry);
+                    series = tradeData.series;
+                    compareSeries = tradeData.compareSeries;
+                }
+                else {
+                    throw new common_1.BadRequestException(`Unsupported DATAcube dataset: ${entry.id}`);
+                }
             }
             else if (entry.source === 'susr') {
                 if (!entry.susrConfig) {
@@ -65,7 +78,7 @@ let AnalyzeService = class AnalyzeService {
         }
         series.datasetLabel = entry.label;
         series.unit = entry.unit;
-        const insights = (0, analytics_1.computeInsights)(series.points, series.unit);
+        const insights = (0, analytics_1.computeInsights)(series.points, series.unit, series.dimensions.displaySeries);
         const chart = (0, analytics_1.buildChartPayload)(series);
         const response = { series, compareSeries, insights, chart };
         this.cache.set(cacheKey, response);
@@ -100,6 +113,7 @@ exports.AnalyzeService = AnalyzeService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [catalog_service_1.CatalogService,
         cache_service_1.CacheService,
-        real_estate_analysis_service_1.RealEstateAnalysisService])
+        real_estate_analysis_service_1.RealEstateAnalysisService,
+        trade_analysis_service_1.TradeAnalysisService])
 ], AnalyzeService);
 //# sourceMappingURL=analyze.service.js.map

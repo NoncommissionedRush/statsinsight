@@ -3,6 +3,7 @@ import type {
   AnalyzeResponse,
   GroceryAnalysisResponse,
   RealEstateAnalysisResponse,
+  TradeAnalysisResponse,
   AiAnalysisRequest,
   AiAnalysisResponse,
 } from './types';
@@ -63,6 +64,18 @@ export async function analyzeRealEstate(from: string, to: string): Promise<RealE
   });
   if (!res.ok) {
     throw new Error(await getErrorMessage(res, `Failed to analyze real estate: ${res.status}`));
+  }
+  return res.json();
+}
+
+export async function analyzeTrade(from: string, to: string): Promise<TradeAnalysisResponse> {
+  const res = await fetch('/api/trade-analysis', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to }),
+  });
+  if (!res.ok) {
+    throw new Error(await getErrorMessage(res, `Failed to analyze trade: ${res.status}`));
   }
   return res.json();
 }

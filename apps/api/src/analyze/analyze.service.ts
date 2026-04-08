@@ -5,6 +5,7 @@ import { AnalyzeResponse, TimeSeries } from '@statinsight/types';
 import { CatalogService } from '../catalog/catalog.service';
 import { CacheService } from '../cache/cache.service';
 import { RealEstateAnalysisService } from '../real-estate-analysis/real-estate-analysis.service';
+import { TradeAnalysisService } from '../trade-analysis/trade-analysis.service';
 
 const COUNTRY_COMPARISON_DATASET_IDS = new Set([
   'eurostat:prc_hicp_manr',
@@ -18,6 +19,7 @@ export class AnalyzeService {
     private readonly catalog: CatalogService,
     private readonly cache: CacheService,
     private readonly realEstateAnalysis: RealEstateAnalysisService,
+    private readonly tradeAnalysis: TradeAnalysisService,
   ) {}
 
   async analyze(catalogId: string, compareCountries: string[] = []): Promise<AnalyzeResponse> {
@@ -41,7 +43,15 @@ export class AnalyzeService {
         series = await fetchEurostat(entry.datasetCode, entry.defaultFilters);
         compareSeries = await this.fetchCompareSeries(entry, normalizedCompareCountries);
       } else if (entry.source === 'datacube') {
-        series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
+        if (entry.id === 'datacube:sp1002qs') {
+          series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
+        } else if (entry.id === 'datacube:zo0020ms') {
+          const tradeData = await this.tradeAnalysis.buildTradeSeries(entry);
+          series = tradeData.series;
+          compareSeries = tradeData.compareSeries;
+        } else {
+          throw new BadRequestException(`Unsupported DATAcube dataset: ${entry.id}`);
+        }
       } else if (entry.source === 'susr') {
         if (!entry.susrConfig) {
           throw new BadRequestException('SUSR entry missing susrConfig');
@@ -59,7 +69,7 @@ export class AnalyzeService {
     series.unit = entry.unit;
 
     // Compute insights
-    const insights = computeInsights(series.points, series.unit);
+    const insights = computeInsights(series.points, series.unit, series.dimensions.displaySeries);
     const chart = buildChartPayload(series);
 
     const response: AnalyzeResponse = { series, compareSeries, insights, chart };

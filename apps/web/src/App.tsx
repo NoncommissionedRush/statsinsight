@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate, analyzeWithAI } from './api';
+import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate, analyzeTrade, analyzeWithAI } from './api';
 import { buildChartPayload, computeInsights } from './analytics';
 import { CountryComparisonPicker } from './components/CountryComparisonPicker';
 import { DatasetPicker } from './components/DatasetPicker';
@@ -7,6 +7,7 @@ import { ChartView } from './components/ChartView';
 import { GroceryInsights } from './components/GroceryInsights';
 import { InsightCards } from './components/InsightCards';
 import { RealEstateInsights } from './components/RealEstateInsights';
+import { TradeInsights } from './components/TradeInsights';
 import { TimeRangePicker } from './components/TimeRangePicker';
 import { AIAnalysis } from './components/AIAnalysis';
 import { COUNTRY_OPTIONS } from './countries';
@@ -15,12 +16,14 @@ import type {
   AnalyzeResponse,
   GroceryAnalysisResponse,
   RealEstateAnalysisResponse,
+  TradeAnalysisResponse,
   AiAnalysisRequest,
 } from './types';
 import './App.css';
 
 const GROCERY_INSIGHTS_DATASET_ID = 'eurostat:prc_hicp_manr';
 const REAL_ESTATE_DATASET_ID = 'datacube:sp1002qs';
+const TRADE_DATASET_ID = 'datacube:zo0020ms';
 const COUNTRY_COMPARISON_DATASET_IDS = new Set([
   'eurostat:prc_hicp_manr',
   'eurostat:une_rt_m',
@@ -43,6 +46,9 @@ function App() {
   const [realEstateResult, setRealEstateResult] = useState<RealEstateAnalysisResponse | null>(null);
   const [realEstateLoading, setRealEstateLoading] = useState(false);
   const [realEstateError, setRealEstateError] = useState<string | null>(null);
+  const [tradeResult, setTradeResult] = useState<TradeAnalysisResponse | null>(null);
+  const [tradeLoading, setTradeLoading] = useState(false);
+  const [tradeError, setTradeError] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,6 +60,7 @@ function App() {
   const selectedEntry = catalog.find((entry) => entry.id === selected) || null;
   const showGroceryInsights = selected === GROCERY_INSIGHTS_DATASET_ID;
   const showRealEstateInsights = selected === REAL_ESTATE_DATASET_ID;
+  const showTradeInsights = selected === TRADE_DATASET_ID;
   const showCountryComparison =
     selectedEntry?.source === 'eurostat' && COUNTRY_COMPARISON_DATASET_IDS.has(selectedEntry.id);
 
@@ -81,6 +88,8 @@ function App() {
     setGroceryError(null);
     setRealEstateResult(null);
     setRealEstateError(null);
+    setTradeResult(null);
+    setTradeError(null);
     setCompareCountries([]);
     setAiAnalysis(null);
     setAiError(null);
@@ -186,6 +195,41 @@ function App() {
     };
   }, [result, rangeStart, rangeEnd, showRealEstateInsights]);
 
+  useEffect(() => {
+    if (!result || !rangeStart || !rangeEnd || !showTradeInsights) {
+      setTradeResult(null);
+      setTradeError(null);
+      setTradeLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setTradeLoading(true);
+    setTradeError(null);
+
+    analyzeTrade(rangeStart, rangeEnd)
+      .then((data) => {
+        if (!cancelled) {
+          setTradeResult(data);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) {
+          setTradeResult(null);
+          setTradeError(`Trade analysis unavailable: ${e.message}`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setTradeLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result, rangeStart, rangeEnd, showTradeInsights]);
+
   const rangeOptions = result?.series.points.map((point) => ({
     value: point.time,
     label: point.label || point.time,
@@ -230,9 +274,29 @@ function App() {
           ...result.series,
           points: filteredPoints,
         }),
-        insights: computeInsights(filteredPoints, result.series.unit),
+        insights: computeInsights(filteredPoints, result.series.unit, result.series.dimensions.displaySeries),
       }
     : null;
+
+  const tradeImportInsights = showTradeInsights && filteredResult
+    ? computeInsights(
+        filteredResult.series.points,
+        filteredResult.series.unit,
+        filteredResult.series.dimensions.displaySeries,
+      )
+    : [];
+
+  const tradeExportSeries = showTradeInsights
+    ? filteredResult?.compareSeries?.find((series) => series.dimensions.displaySeries === 'Exports') ?? null
+    : null;
+
+  const tradeExportInsights = tradeExportSeries
+    ? computeInsights(
+        tradeExportSeries.points,
+        tradeExportSeries.unit,
+        tradeExportSeries.dimensions.displaySeries,
+      )
+    : [];
 
   const handleAiAnalyze = () => {
     if (!filteredResult || !rangeStart || !rangeEnd) return;
@@ -247,6 +311,8 @@ function App() {
       compareSeries: filteredResult.compareSeries,
       groceryMovers: groceryResult?.movers,
       realEstateMovers: realEstateResult?.movers,
+      tradeImportMovers: tradeResult?.importMovers,
+      tradeExportMovers: tradeResult?.exportMovers,
     };
 
     setAiLoading(true);
@@ -355,7 +421,14 @@ function App() {
               compareSeries={filteredResult.compareSeries}
               source={SOURCE_LABELS[filteredResult.series.source] ?? filteredResult.series.source}
             />
-            <InsightCards insights={filteredResult.insights} />
+            {showTradeInsights ? (
+              <div className="trade-insights-grid">
+                <InsightCards insights={tradeImportInsights} title="Import Insights" />
+                <InsightCards insights={tradeExportInsights} title="Export Insights" />
+              </div>
+            ) : (
+              <InsightCards insights={filteredResult.insights} />
+            )}
 
             {showGroceryInsights && (
               <section className="groceries-shell">
@@ -370,6 +443,14 @@ function App() {
                 {realEstateLoading && <p className="groceries-status">Analyzing real estate price movers...</p>}
                 {realEstateError && <p className="groceries-status error-text">{realEstateError}</p>}
                 {realEstateResult && !realEstateLoading && <RealEstateInsights data={realEstateResult} />}
+              </section>
+            )}
+
+            {showTradeInsights && (
+              <section className="trade-shell">
+                {tradeLoading && <p className="groceries-status">Analyzing import and export category movers...</p>}
+                {tradeError && <p className="groceries-status error-text">{tradeError}</p>}
+                {tradeResult && !tradeLoading && <TradeInsights data={tradeResult} />}
               </section>
             )}
 

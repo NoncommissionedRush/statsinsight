@@ -23,6 +23,7 @@ interface Props {
 const COMPARE_COLORS = ['#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2', '#ea580c'];
 
 function buildSeriesLabel(series: TimeSeries): string {
+  if (series.dimensions.displaySeries) return series.dimensions.displaySeries;
   const geo = series.dimensions.geo;
   if (geo && COUNTRY_LABELS[geo]) return COUNTRY_LABELS[geo];
   return geo || series.datasetLabel;
@@ -31,10 +32,11 @@ function buildSeriesLabel(series: TimeSeries): string {
 export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const primarySeriesName = chart.primarySeriesName || 'Slovakia';
   const data = chart.labels.map((label, index) => {
     const row: Record<string, string | number | null> = {
       name: label,
-      Slovakia: chart.values[index],
+      [primarySeriesName]: chart.values[index],
     };
 
     for (const series of compareSeries) {
@@ -48,7 +50,7 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const avg = validValues.length > 0
     ? validValues.reduce((sum, value) => sum + value, 0) / validValues.length
     : null;
-  const seriesNames = ['Slovakia', ...compareSeries.map(buildSeriesLabel)];
+  const seriesNames = [primarySeriesName, ...compareSeries.map(buildSeriesLabel)];
 
   const getExportHtml = () => {
     return exportSvgChartAsHtml({
@@ -121,13 +123,13 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
               y={avg}
               stroke="#94a3b8"
               strokeDasharray="5 5"
-              label={{ value: `SK Avg: ${avg.toFixed(2)}`, position: 'right', fontSize: 11 }}
+              label={{ value: `${primarySeriesName} Avg: ${avg.toFixed(2)}`, position: 'right', fontSize: 11 }}
             />
           )}
           <Line
             type="monotone"
-            dataKey="Slovakia"
-            name="Slovakia"
+            dataKey={primarySeriesName}
+            name={primarySeriesName}
             stroke="#2563eb"
             strokeWidth={3}
             dot={{ r: 3 }}

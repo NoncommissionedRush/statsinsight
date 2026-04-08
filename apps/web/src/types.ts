@@ -35,6 +35,7 @@ export interface ChartPayload {
   values: (number | null)[];
   unit: string;
   title: string;
+  primarySeriesName?: string;
 }
 
 export interface AnalyzeResponse {
@@ -83,4 +84,45 @@ export interface RealEstateAnalysisResponse {
   topIncrease: RealEstateMover | null;
   topDecrease: RealEstateMover | null;
   movers: RealEstateMover[];
+}
+
+export interface TradeMover {
+  seriesCode: string;
+  categoryLabel: string;
+  flowLabel: 'Dovoz' | 'Vývoz';
+  startValue: number;
+  endValue: number;
+  change: number;
+  pctChange?: number;
+}
+
+export interface TradeAnalysisResponse {
+  requestedFrom: string;
+  requestedTo: string;
+  comparedFrom: string;
+  comparedTo: string;
+  importTopIncrease: TradeMover | null;
+  importTopDecrease: TradeMover | null;
+  exportTopIncrease: TradeMover | null;
+  exportTopDecrease: TradeMover | null;
+  importMovers: TradeMover[];
+  exportMovers: TradeMover[];
+}
+
+export interface AiAnalysisRequest {
+  datasetLabel: string;
+  unit: string;
+  from: string;
+  to: string;
+  points: TimePoint[];
+  insights: Insight[];
+  compareSeries?: TimeSeries[];
+  groceryMovers?: GroceryMover[];
+  realEstateMovers?: RealEstateMover[];
+  tradeImportMovers?: TradeMover[];
+  tradeExportMovers?: TradeMover[];
+}
+
+export interface AiAnalysisResponse {
+  analysis: string;
 }

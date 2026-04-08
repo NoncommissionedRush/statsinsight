@@ -2,6 +2,7 @@ import type { Insight } from '../types';
 
 interface Props {
   insights: Insight[];
+  title?: string;
 }
 
 const KIND_ICONS: Record<string, string> = {
@@ -13,14 +14,14 @@ const KIND_ICONS: Record<string, string> = {
   largest_move: 'max',
 };
 
-export function InsightCards({ insights }: Props) {
+export function InsightCards({ insights, title = 'Insights' }: Props) {
   if (insights.length === 0) {
     return <p className="no-insights">No notable insights detected for this dataset.</p>;
   }
 
   return (
     <div className="insights">
-      <h2>Insights</h2>
+      <h2>{title}</h2>
       <div className="insight-grid">
         {insights.map((insight, i) => (
           <div key={i} className="insight-card">

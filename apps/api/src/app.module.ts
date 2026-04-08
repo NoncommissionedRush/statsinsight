@@ -6,9 +6,18 @@ import { HealthController } from './health/health.controller';
 import { GroceryAnalysisModule } from './grocery-analysis/grocery-analysis.module';
 import { RealEstateAnalysisModule } from './real-estate-analysis/real-estate-analysis.module';
 import { AiAnalysisModule } from './ai-analysis/ai-analysis.module';
+import { TradeAnalysisModule } from './trade-analysis/trade-analysis.module';
 
 @Module({
-  imports: [CatalogModule, AnalyzeModule, CacheModule, GroceryAnalysisModule, RealEstateAnalysisModule, AiAnalysisModule],
+  imports: [
+    CatalogModule,
+    AnalyzeModule,
+    CacheModule,
+    GroceryAnalysisModule,
+    RealEstateAnalysisModule,
+    TradeAnalysisModule,
+    AiAnalysisModule,
+  ],
   controllers: [HealthController],
 })
 export class AppModule {}
