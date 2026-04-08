@@ -1,6 +1,6 @@
 export interface CatalogEntry {
   id: string;
-  source: 'susr' | 'eurostat';
+  source: 'susr' | 'eurostat' | 'datacube';
   datasetCode: string;
   label: string;
   description: string;
@@ -14,7 +14,7 @@ export interface TimePoint {
 }
 
 export interface TimeSeries {
-  source: 'susr' | 'eurostat';
+  source: 'susr' | 'eurostat' | 'datacube';
   datasetCode: string;
   datasetLabel: string;
   unit: string;
@@ -62,4 +62,25 @@ export interface GroceryAnalysisResponse {
   topIncrease: GroceryMover | null;
   topDecrease: GroceryMover | null;
   movers: GroceryMover[];
+}
+
+export interface RealEstateMover {
+  seriesCode: string;
+  propertyLabel: string;
+  measureLabel: string;
+  startValue: number;
+  endValue: number;
+  change: number;
+  pctChange?: number;
+}
+
+export interface RealEstateAnalysisResponse {
+  requestedFrom: string;
+  requestedTo: string;
+  comparedFrom: string;
+  comparedTo: string;
+  measureLabel: string;
+  topIncrease: RealEstateMover | null;
+  topDecrease: RealEstateMover | null;
+  movers: RealEstateMover[];
 }

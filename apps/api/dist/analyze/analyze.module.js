@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const analyze_controller_1 = require("./analyze.controller");
 const analyze_service_1 = require("./analyze.service");
 const catalog_module_1 = require("../catalog/catalog.module");
+const real_estate_analysis_module_1 = require("../real-estate-analysis/real-estate-analysis.module");
 let AnalyzeModule = class AnalyzeModule {
 };
 exports.AnalyzeModule = AnalyzeModule;
 exports.AnalyzeModule = AnalyzeModule = __decorate([
     (0, common_1.Module)({
-        imports: [catalog_module_1.CatalogModule],
+        imports: [catalog_module_1.CatalogModule, real_estate_analysis_module_1.RealEstateAnalysisModule],
         controllers: [analyze_controller_1.AnalyzeController],
         providers: [analyze_service_1.AnalyzeService],
     })

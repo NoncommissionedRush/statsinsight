@@ -4,9 +4,10 @@ import { AnalyzeModule } from './analyze/analyze.module';
 import { CacheModule } from './cache/cache.module';
 import { HealthController } from './health/health.controller';
 import { GroceryAnalysisModule } from './grocery-analysis/grocery-analysis.module';
+import { RealEstateAnalysisModule } from './real-estate-analysis/real-estate-analysis.module';
 
 @Module({
-  imports: [CatalogModule, AnalyzeModule, CacheModule, GroceryAnalysisModule],
+  imports: [CatalogModule, AnalyzeModule, CacheModule, GroceryAnalysisModule, RealEstateAnalysisModule],
   controllers: [HealthController],
 })
 export class AppModule {}

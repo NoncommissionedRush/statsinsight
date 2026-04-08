@@ -354,18 +354,23 @@ header .subtitle {
   margin-bottom: 1rem;
 }
 
-.groceries-header h2 {
+.groceries-header h2,
+.real-estate-header h2 {
   font-size: 1.25rem;
   margin-bottom: 0.25rem;
 }
 
 .groceries-header p,
 .grocery-card p,
-.grocery-chart-copy p {
+.grocery-chart-copy p,
+.real-estate-header p,
+.real-estate-card p,
+.real-estate-chart-copy p {
   color: var(--text-muted);
 }
 
-.groceries-note {
+.groceries-note,
+.real-estate-note {
   margin-top: 0.5rem;
   font-size: 0.9rem;
 }
@@ -382,6 +387,7 @@ header .subtitle {
 }
 
 .grocery-card,
+.real-estate-card,
 .grocery-chart-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -391,12 +397,15 @@ header .subtitle {
 
 .grocery-card h3,
 .grocery-table-block h3,
-.grocery-chart-copy h3 {
+.grocery-chart-copy h3,
+.real-estate-card h3,
+.real-estate-chart-copy h3 {
   font-size: 0.95rem;
   margin-bottom: 0.45rem;
 }
 
-.grocery-card strong {
+.grocery-card strong,
+.real-estate-card strong {
   display: block;
   margin-bottom: 0.4rem;
 }
@@ -405,8 +414,36 @@ header .subtitle {
   margin-bottom: 1rem;
 }
 
-.grocery-chart-copy {
+.grocery-chart-copy,
+.real-estate-chart-copy {
   margin-bottom: 0.75rem;
+}
+
+.real-estate-section {
+  margin-bottom: 1.5rem;
+}
+
+.real-estate-header {
+  margin-bottom: 1rem;
+}
+
+.real-estate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.real-estate-grid-four {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.real-estate-chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .grocery-chart-wrap {

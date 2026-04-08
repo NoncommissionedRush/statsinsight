@@ -1,4 +1,9 @@
-import type { CatalogEntry, AnalyzeResponse, GroceryAnalysisResponse } from './types';
+import type {
+  CatalogEntry,
+  AnalyzeResponse,
+  GroceryAnalysisResponse,
+  RealEstateAnalysisResponse,
+} from './types';
 
 async function getErrorMessage(res: Response, fallback: string): Promise<string> {
   const text = await res.text().catch(() => '');
@@ -44,6 +49,18 @@ export async function analyzeGroceries(from: string, to: string): Promise<Grocer
   });
   if (!res.ok) {
     throw new Error(await getErrorMessage(res, `Failed to analyze groceries: ${res.status}`));
+  }
+  return res.json();
+}
+
+export async function analyzeRealEstate(from: string, to: string): Promise<RealEstateAnalysisResponse> {
+  const res = await fetch('/api/real-estate-analysis', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to }),
+  });
+  if (!res.ok) {
+    throw new Error(await getErrorMessage(res, `Failed to analyze real estate: ${res.status}`));
   }
   return res.json();
 }

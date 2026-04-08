@@ -10,6 +10,7 @@ interface Props {
 const SOURCE_BADGES: Record<string, { label: string; color: string }> = {
   eurostat: { label: 'Eurostat', color: '#003399' },
   susr: { label: 'SU SR', color: '#e63946' },
+  datacube: { label: 'DATAcube', color: '#0f766e' },
 };
 
 export function DatasetPicker({ catalog, selected, loading, onSelect }: Props) {

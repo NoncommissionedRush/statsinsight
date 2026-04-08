@@ -4,6 +4,7 @@ import { computeInsights, buildChartPayload } from '@statinsight/analytics';
 import { AnalyzeResponse, TimeSeries } from '@statinsight/types';
 import { CatalogService } from '../catalog/catalog.service';
 import { CacheService } from '../cache/cache.service';
+import { RealEstateAnalysisService } from '../real-estate-analysis/real-estate-analysis.service';
 
 const COUNTRY_COMPARISON_DATASET_IDS = new Set([
   'eurostat:prc_hicp_manr',
@@ -16,6 +17,7 @@ export class AnalyzeService {
   constructor(
     private readonly catalog: CatalogService,
     private readonly cache: CacheService,
+    private readonly realEstateAnalysis: RealEstateAnalysisService,
   ) {}
 
   async analyze(catalogId: string, compareCountries: string[] = []): Promise<AnalyzeResponse> {
@@ -38,6 +40,8 @@ export class AnalyzeService {
       if (entry.source === 'eurostat') {
         series = await fetchEurostat(entry.datasetCode, entry.defaultFilters);
         compareSeries = await this.fetchCompareSeries(entry, normalizedCompareCountries);
+      } else if (entry.source === 'datacube') {
+        series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
       } else if (entry.source === 'susr') {
         if (!entry.susrConfig) {
           throw new BadRequestException('SUSR entry missing susrConfig');

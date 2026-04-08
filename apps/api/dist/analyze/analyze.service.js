@@ -15,6 +15,7 @@ const connectors_1 = require("@statinsight/connectors");
 const analytics_1 = require("@statinsight/analytics");
 const catalog_service_1 = require("../catalog/catalog.service");
 const cache_service_1 = require("../cache/cache.service");
+const real_estate_analysis_service_1 = require("../real-estate-analysis/real-estate-analysis.service");
 const COUNTRY_COMPARISON_DATASET_IDS = new Set([
     'eurostat:prc_hicp_manr',
     'eurostat:une_rt_m',
@@ -23,9 +24,11 @@ const COUNTRY_COMPARISON_DATASET_IDS = new Set([
 let AnalyzeService = class AnalyzeService {
     catalog;
     cache;
-    constructor(catalog, cache) {
+    realEstateAnalysis;
+    constructor(catalog, cache, realEstateAnalysis) {
         this.catalog = catalog;
         this.cache = cache;
+        this.realEstateAnalysis = realEstateAnalysis;
     }
     async analyze(catalogId, compareCountries = []) {
         const entry = this.catalog.findById(catalogId);
@@ -43,6 +46,9 @@ let AnalyzeService = class AnalyzeService {
             if (entry.source === 'eurostat') {
                 series = await (0, connectors_1.fetchEurostat)(entry.datasetCode, entry.defaultFilters);
                 compareSeries = await this.fetchCompareSeries(entry, normalizedCompareCountries);
+            }
+            else if (entry.source === 'datacube') {
+                series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
             }
             else if (entry.source === 'susr') {
                 if (!entry.susrConfig) {
@@ -93,6 +99,7 @@ exports.AnalyzeService = AnalyzeService;
 exports.AnalyzeService = AnalyzeService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [catalog_service_1.CatalogService,
-        cache_service_1.CacheService])
+        cache_service_1.CacheService,
+        real_estate_analysis_service_1.RealEstateAnalysisService])
 ], AnalyzeService);
 //# sourceMappingURL=analyze.service.js.map

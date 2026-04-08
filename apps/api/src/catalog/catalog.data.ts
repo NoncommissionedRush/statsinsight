@@ -43,6 +43,15 @@ export const CATALOG: CatalogEntry[] = [
     },
   },
   {
+    id: 'datacube:sp1002qs',
+    source: 'datacube',
+    datasetCode: 'sp1002qs',
+    label: 'Real Estate Price Index (Quarterly) - Slovakia',
+    description: 'Quarterly transaction price index for real estate, average of 2010 = 100',
+    unit: 'index',
+    defaultFilters: {},
+  },
+  {
     id: 'eurostat:demo_pjan',
     source: 'eurostat',
     datasetCode: 'demo_pjan',
