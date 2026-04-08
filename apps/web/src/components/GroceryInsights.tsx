@@ -113,6 +113,7 @@ export function GroceryInsights({ data }: Props) {
       title: exportTitle,
       unit: 'change in price',
       seriesNames: chartMovers.map((mover) => mover.name),
+      source: 'SU SR DATAcube',
     });
 
   const handleCopy = async () => {

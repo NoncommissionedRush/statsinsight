@@ -628,6 +628,72 @@ header .subtitle {
   font-weight: 600;
 }
 
+/* AI Analysis */
+.ai-analysis {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.ai-analysis-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.ai-analyze-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ai-analyze-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-analyze-btn:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+.ai-analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ai-analysis-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.ai-analysis-placeholder {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ai-analysis-error {
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
 /* Footer */
 footer {
   text-align: center;

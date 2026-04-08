@@ -3,6 +3,8 @@ import type {
   AnalyzeResponse,
   GroceryAnalysisResponse,
   RealEstateAnalysisResponse,
+  AiAnalysisRequest,
+  AiAnalysisResponse,
 } from './types';
 
 async function getErrorMessage(res: Response, fallback: string): Promise<string> {
@@ -61,6 +63,18 @@ export async function analyzeRealEstate(from: string, to: string): Promise<RealE
   });
   if (!res.ok) {
     throw new Error(await getErrorMessage(res, `Failed to analyze real estate: ${res.status}`));
+  }
+  return res.json();
+}
+
+export async function analyzeWithAI(request: AiAnalysisRequest): Promise<AiAnalysisResponse> {
+  const res = await fetch('/api/ai-analysis', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    throw new Error(await getErrorMessage(res, `AI analysis failed: ${res.status}`));
   }
   return res.json();
 }

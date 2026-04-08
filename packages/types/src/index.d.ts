@@ -95,3 +95,17 @@ export interface ChartPayload {
     unit: string;
     title: string;
 }
+export interface AiAnalysisRequest {
+    datasetLabel: string;
+    unit: string;
+    from: string;
+    to: string;
+    points: TimePoint[];
+    insights: Insight[];
+    compareSeries?: TimeSeries[];
+    groceryMovers?: GroceryMover[];
+    realEstateMovers?: RealEstateMover[];
+}
+export interface AiAnalysisResponse {
+    analysis: string;
+}

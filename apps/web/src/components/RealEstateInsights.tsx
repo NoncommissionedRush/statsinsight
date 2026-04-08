@@ -99,6 +99,7 @@ export function RealEstateInsights({ data }: Props) {
       title: exportTitle,
       unit: 'index points',
       seriesNames: chartMovers.map((mover) => mover.name),
+      source: 'SU SR DATAcube',
     });
 
   const handleCopy = async () => {

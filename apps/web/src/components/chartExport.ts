@@ -6,16 +6,24 @@ function slugify(value: string): string {
     .slice(0, 80) || 'chart';
 }
 
+// Inline SVG recreation of the aktuality.sk logo (self-contained, no external deps)
+const AKTUALITY_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 42" height="18" aria-label="aktuality.sk">
+  <polygon points="0,0 14,0 28,21 14,42 0,42 14,21" fill="#cc2828"/>
+  <text x="36" y="30" font-family="'Arial Black',Arial,Helvetica,sans-serif" font-weight="900" font-size="28" fill="#1a2744">aktuality.sk</text>
+</svg>`;
+
 function buildExportHtml({
   title,
   unit,
   seriesNames,
   svgMarkup,
+  source,
 }: {
   title: string;
   unit: string;
   seriesNames: string[];
   svgMarkup: string;
+  source: string;
 }) {
   const exportedAt = new Date().toISOString().slice(0, 10);
   const seriesLine = seriesNames.join(', ');
@@ -82,6 +90,26 @@ function buildExportHtml({
         width: 100%;
         height: auto;
       }
+
+      .chart-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+
+      .chart-source {
+        font-size: 12px;
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      .chart-logo {
+        display: flex;
+        align-items: center;
+      }
     </style>
   </head>
   <body>
@@ -95,6 +123,10 @@ function buildExportHtml({
       <div class="chart-svg">
         ${svgMarkup}
       </div>
+      <div class="chart-footer">
+        <span class="chart-source">Source: ${source}</span>
+        <div class="chart-logo">${AKTUALITY_LOGO_SVG}</div>
+      </div>
     </figure>
   </body>
 </html>`;
@@ -105,11 +137,13 @@ export function exportSvgChartAsHtml({
   title,
   unit,
   seriesNames,
+  source,
 }: {
   container: HTMLElement | null;
   title: string;
   unit: string;
   seriesNames: string[];
+  source: string;
 }) {
   const svg = container?.querySelector('svg');
   if (!(svg instanceof SVGSVGElement)) {
@@ -128,6 +162,7 @@ export function exportSvgChartAsHtml({
     unit,
     seriesNames,
     svgMarkup: clonedSvg.outerHTML,
+    source,
   });
 }
 

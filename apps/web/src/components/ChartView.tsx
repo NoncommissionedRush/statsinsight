@@ -17,6 +17,7 @@ import { copyChartHtml, downloadChartHtml, exportSvgChartAsHtml } from './chartE
 interface Props {
   chart: ChartPayload;
   compareSeries?: TimeSeries[];
+  source?: string;
 }
 
 const COMPARE_COLORS = ['#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2', '#ea580c'];
@@ -27,7 +28,7 @@ function buildSeriesLabel(series: TimeSeries): string {
   return geo || series.datasetLabel;
 }
 
-export function ChartView({ chart, compareSeries = [] }: Props) {
+export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const data = chart.labels.map((label, index) => {
@@ -55,6 +56,7 @@ export function ChartView({ chart, compareSeries = [] }: Props) {
       title: chart.title,
       unit: chart.unit,
       seriesNames,
+      source,
     });
   };
 

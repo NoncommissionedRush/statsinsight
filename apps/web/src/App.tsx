@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate } from './api';
+import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate, analyzeWithAI } from './api';
 import { buildChartPayload, computeInsights } from './analytics';
 import { CountryComparisonPicker } from './components/CountryComparisonPicker';
 import { DatasetPicker } from './components/DatasetPicker';
@@ -8,12 +8,14 @@ import { GroceryInsights } from './components/GroceryInsights';
 import { InsightCards } from './components/InsightCards';
 import { RealEstateInsights } from './components/RealEstateInsights';
 import { TimeRangePicker } from './components/TimeRangePicker';
+import { AIAnalysis } from './components/AIAnalysis';
 import { COUNTRY_OPTIONS } from './countries';
 import type {
   CatalogEntry,
   AnalyzeResponse,
   GroceryAnalysisResponse,
   RealEstateAnalysisResponse,
+  AiAnalysisRequest,
 } from './types';
 import './App.css';
 
@@ -24,6 +26,11 @@ const COUNTRY_COMPARISON_DATASET_IDS = new Set([
   'eurostat:une_rt_m',
   'eurostat:namq_10_gdp',
 ]);
+const SOURCE_LABELS: Record<string, string> = {
+  eurostat: 'Eurostat',
+  susr: 'SU SR',
+  datacube: 'SU SR DATAcube',
+};
 
 function App() {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
@@ -40,6 +47,10 @@ function App() {
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiStale, setAiStale] = useState(false);
   const selectedEntry = catalog.find((entry) => entry.id === selected) || null;
   const showGroceryInsights = selected === GROCERY_INSIGHTS_DATASET_ID;
   const showRealEstateInsights = selected === REAL_ESTATE_DATASET_ID;
@@ -71,6 +82,9 @@ function App() {
     setRealEstateResult(null);
     setRealEstateError(null);
     setCompareCountries([]);
+    setAiAnalysis(null);
+    setAiError(null);
+    setAiStale(false);
   };
 
   useEffect(() => {
@@ -220,6 +234,37 @@ function App() {
       }
     : null;
 
+  const handleAiAnalyze = () => {
+    if (!filteredResult || !rangeStart || !rangeEnd) return;
+
+    const req: AiAnalysisRequest = {
+      datasetLabel: filteredResult.series.datasetLabel,
+      unit: filteredResult.series.unit,
+      from: rangeStart,
+      to: rangeEnd,
+      points: filteredResult.series.points,
+      insights: filteredResult.insights,
+      compareSeries: filteredResult.compareSeries,
+      groceryMovers: groceryResult?.movers,
+      realEstateMovers: realEstateResult?.movers,
+    };
+
+    setAiLoading(true);
+    setAiError(null);
+    setAiStale(false);
+
+    analyzeWithAI(req)
+      .then((res) => {
+        setAiAnalysis(res.analysis);
+      })
+      .catch((e: Error) => {
+        setAiError(`AI analýza zlyhala: ${e.message}`);
+      })
+      .finally(() => {
+        setAiLoading(false);
+      });
+  };
+
   const handleRangeStartChange = (nextStart: string) => {
     if (!result) return;
 
@@ -232,6 +277,7 @@ function App() {
     if (nextStartIndex > currentEndIndex) {
       setRangeEnd(nextStart);
     }
+    if (aiAnalysis) setAiStale(true);
   };
 
   const handleRangeEndChange = (nextEnd: string) => {
@@ -246,6 +292,7 @@ function App() {
     if (nextEndIndex < currentStartIndex) {
       setRangeStart(nextEnd);
     }
+    if (aiAnalysis) setAiStale(true);
   };
 
   const handleCountryToggle = (code: string) => {
@@ -254,6 +301,7 @@ function App() {
         ? current.filter((item) => item !== code)
         : [...current, code],
     );
+    if (aiAnalysis) setAiStale(true);
   };
 
   return (
@@ -302,7 +350,11 @@ function App() {
               onToChange={handleRangeEndChange}
             />
 
-            <ChartView chart={filteredResult.chart} compareSeries={filteredResult.compareSeries} />
+            <ChartView
+              chart={filteredResult.chart}
+              compareSeries={filteredResult.compareSeries}
+              source={SOURCE_LABELS[filteredResult.series.source] ?? filteredResult.series.source}
+            />
             <InsightCards insights={filteredResult.insights} />
 
             {showGroceryInsights && (
@@ -320,6 +372,14 @@ function App() {
                 {realEstateResult && !realEstateLoading && <RealEstateInsights data={realEstateResult} />}
               </section>
             )}
+
+            <AIAnalysis
+              analysis={aiAnalysis}
+              loading={aiLoading}
+              error={aiError}
+              onAnalyze={handleAiAnalyze}
+              stale={aiStale}
+            />
 
             <details className="raw-data">
               <summary>Raw data ({filteredResult.series.points.length} data points)</summary>
