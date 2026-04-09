@@ -1,6 +1,4 @@
-import type { AiAnalysisRequest } from '@statinsight/types';
+import type { AiAnalysisRequest, AiAnalysisResponse } from '@statinsight/types';
 export declare class AiAnalysisService {
-    analyze(req: AiAnalysisRequest): Promise<{
-        analysis: string;
-    }>;
+    analyze(req: AiAnalysisRequest): Promise<AiAnalysisResponse>;
 }

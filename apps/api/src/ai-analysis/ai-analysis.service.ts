@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type {
   AiAnalysisRequest,
+  AiAnalysisResponse,
+  AiChatMessage,
   GroceryMover,
   RealEstateMover,
   TradeMover,
@@ -19,7 +21,7 @@ function getClient(): GoogleGenerativeAI {
   return client;
 }
 
-function buildPrompt(req: AiAnalysisRequest): string {
+function buildDatasetContext(req: AiAnalysisRequest): string {
   const validPoints = req.points.filter((p: TimePoint) => p.value !== null);
   const latest = validPoints[validPoints.length - 1];
   const earliest = validPoints[0];
@@ -65,7 +67,7 @@ Number of data points: ${validPoints.length}
     });
     const bottom = req.groceryMovers.slice(-3);
     if (bottom.length > 0 && bottom[0] !== top5[top5.length - 1]) {
-      prompt += `Biggest decreases:\n`;
+      prompt += `Additional notable decliners:\n`;
       bottom.forEach((m: GroceryMover) => {
         const pct = m.pctChange != null ? ` (${m.pctChange > 0 ? '+' : ''}${m.pctChange.toFixed(1)}%)` : '';
         prompt += `- ${m.itemLabel}: ${m.startValue} → ${m.endValue} ${m.unit}${pct}\n`;
@@ -97,18 +99,103 @@ Number of data points: ${validPoints.length}
     });
   }
 
-  prompt += `
-In 3-5 sentences in Slovak language, provide a high-level analysis of what this data shows. Where relevant, mention what world events, economic policies, or regional factors might explain the observed trends. Be concise and accessible to a general audience. Do not use any markdown formatting — respond with plain text only.`;
-
   return prompt;
+}
+
+function buildConversation(history: AiChatMessage[] | undefined): string {
+  if (!history || history.length === 0) {
+    return '';
+  }
+
+  return history
+    .map((message) => `${message.role === 'assistant' ? 'Assistant' : 'User'}: ${message.text}`)
+    .join('\n');
+}
+
+function buildPrompt(req: AiAnalysisRequest): string {
+  const datasetContext = buildDatasetContext(req);
+  const question = req.question?.trim();
+  const conversation = buildConversation(req.history);
+
+  if (!question) {
+    return `${datasetContext}
+
+Respond in valid JSON with this exact shape:
+{
+  "analysis": "string",
+  "followUpQuestions": ["string", "string", "string"]
+}
+
+Requirements:
+- Write the analysis in Slovak language.
+- The analysis should be 3-5 sentences, concise, accessible, and plain text.
+- Where relevant, mention world events, economic policies, or regional factors that could explain the trends.
+- Suggest 2-3 short follow-up questions in Slovak that a user could ask next based on this dataset.
+- Do not use markdown.
+- Return only JSON.`;
+  }
+
+  return `${datasetContext}
+
+Previous conversation in Slovak:
+${conversation || 'No previous conversation.'}
+
+Answer this follow-up user question in Slovak:
+${question}
+
+Respond in valid JSON with this exact shape:
+{
+  "analysis": "string",
+  "followUpQuestions": ["string", "string", "string"]
+}
+
+Requirements:
+- Answer only based on the dataset context and prior conversation above.
+- If the data is insufficient, say that clearly in Slovak and avoid inventing facts.
+- Keep the answer concise, plain text, and directly responsive to the user's question.
+- Suggest 2-3 additional short follow-up questions in Slovak that naturally continue the conversation.
+- Do not use markdown.
+- Return only JSON.`;
+}
+
+function sanitizeFollowUps(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+function parseModelResponse(text: string): AiAnalysisResponse {
+  try {
+    const parsed = JSON.parse(text) as Partial<AiAnalysisResponse>;
+    return {
+      analysis: typeof parsed.analysis === 'string' && parsed.analysis.trim()
+        ? parsed.analysis.trim()
+        : 'AI analýza zlyhala. Skúste to prosím neskôr.',
+      followUpQuestions: sanitizeFollowUps(parsed.followUpQuestions),
+    };
+  } catch {
+    return {
+      analysis: text.trim() || 'AI analýza zlyhala. Skúste to prosím neskôr.',
+      followUpQuestions: [],
+    };
+  }
 }
 
 @Injectable()
 export class AiAnalysisService {
-  async analyze(req: AiAnalysisRequest): Promise<{ analysis: string }> {
+  async analyze(req: AiAnalysisRequest): Promise<AiAnalysisResponse> {
     if (!process.env.GEMINI_API_KEY) {
       console.warn('[ai-analysis] GEMINI_API_KEY not set, skipping AI analysis');
-      return { analysis: 'AI analýza nie je dostupná (chýba GEMINI_API_KEY).' };
+      return {
+        analysis: 'AI analýza nie je dostupná (chýba GEMINI_API_KEY).',
+        followUpQuestions: [],
+      };
     }
 
     const prompt = buildPrompt(req);
@@ -121,13 +208,17 @@ export class AiAnalysisService {
         generationConfig: {
           temperature: 0.3,
           maxOutputTokens: 2048,
+          responseMimeType: 'application/json',
         },
       });
-      const analysis = result.response.text().trim();
-      return { analysis };
+
+      return parseModelResponse(result.response.text());
     } catch (err) {
       console.error('[ai-analysis] Gemini call failed:', err);
-      return { analysis: 'AI analýza zlyhala. Skúste to prosím neskôr.' };
+      return {
+        analysis: 'AI analýza zlyhala. Skúste to prosím neskôr.',
+        followUpQuestions: [],
+      };
     }
   }
 }

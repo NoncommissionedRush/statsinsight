@@ -18,6 +18,7 @@ import type {
   RealEstateAnalysisResponse,
   TradeAnalysisResponse,
   AiAnalysisRequest,
+  AiChatMessage,
 } from './types';
 import './App.css';
 
@@ -54,6 +55,9 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiFollowUpQuestions, setAiFollowUpQuestions] = useState<string[]>([]);
+  const [aiConversation, setAiConversation] = useState<AiChatMessage[]>([]);
+  const [aiQuestion, setAiQuestion] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiStale, setAiStale] = useState(false);
@@ -92,6 +96,9 @@ function App() {
     setTradeError(null);
     setCompareCountries([]);
     setAiAnalysis(null);
+    setAiFollowUpQuestions([]);
+    setAiConversation([]);
+    setAiQuestion('');
     setAiError(null);
     setAiStale(false);
   };
@@ -298,10 +305,10 @@ function App() {
       )
     : [];
 
-  const handleAiAnalyze = () => {
-    if (!filteredResult || !rangeStart || !rangeEnd) return;
+  const createAiRequest = (question?: string): AiAnalysisRequest | null => {
+    if (!filteredResult || !rangeStart || !rangeEnd) return null;
 
-    const req: AiAnalysisRequest = {
+    return {
       datasetLabel: filteredResult.series.datasetLabel,
       unit: filteredResult.series.unit,
       from: rangeStart,
@@ -313,7 +320,19 @@ function App() {
       realEstateMovers: realEstateResult?.movers,
       tradeImportMovers: tradeResult?.importMovers,
       tradeExportMovers: tradeResult?.exportMovers,
+      question,
+      history: question
+        ? [
+            ...(aiAnalysis ? [{ role: 'assistant' as const, text: aiAnalysis }] : []),
+            ...aiConversation,
+          ]
+        : undefined,
     };
+  };
+
+  const handleAiAnalyze = () => {
+    const req = createAiRequest();
+    if (!req) return;
 
     setAiLoading(true);
     setAiError(null);
@@ -322,9 +341,40 @@ function App() {
     analyzeWithAI(req)
       .then((res) => {
         setAiAnalysis(res.analysis);
+        setAiFollowUpQuestions(res.followUpQuestions);
+        setAiConversation([]);
+        setAiQuestion('');
       })
       .catch((e: Error) => {
         setAiError(`AI analýza zlyhala: ${e.message}`);
+      })
+      .finally(() => {
+        setAiLoading(false);
+      });
+  };
+
+  const handleAiQuestion = (question: string) => {
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion || aiStale) return;
+
+    const req = createAiRequest(trimmedQuestion);
+    if (!req) return;
+
+    setAiLoading(true);
+    setAiError(null);
+
+    analyzeWithAI(req)
+      .then((res) => {
+        setAiConversation((current) => [
+          ...current,
+          { role: 'user', text: trimmedQuestion },
+          { role: 'assistant', text: res.analysis },
+        ]);
+        setAiFollowUpQuestions(res.followUpQuestions);
+        setAiQuestion('');
+      })
+      .catch((e: Error) => {
+        setAiError(`AI odpoveď zlyhala: ${e.message}`);
       })
       .finally(() => {
         setAiLoading(false);
@@ -456,9 +506,14 @@ function App() {
 
             <AIAnalysis
               analysis={aiAnalysis}
+              followUpQuestions={aiFollowUpQuestions}
+              conversation={aiConversation}
+              question={aiQuestion}
               loading={aiLoading}
               error={aiError}
               onAnalyze={handleAiAnalyze}
+              onQuestionChange={setAiQuestion}
+              onAskQuestion={handleAiQuestion}
               stale={aiStale}
             />
 

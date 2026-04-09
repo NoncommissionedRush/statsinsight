@@ -688,6 +688,7 @@ header .subtitle {
   font-size: 0.95rem;
   line-height: 1.7;
   color: var(--text);
+  margin-bottom: 1rem;
 }
 
 .ai-analysis-placeholder {
@@ -698,6 +699,133 @@ header .subtitle {
 .ai-analysis-error {
   color: var(--error);
   font-size: 0.9rem;
+}
+
+.ai-analysis-thread {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.ai-thread-message {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.ai-thread-message-user {
+  background: var(--bg);
+}
+
+.ai-thread-message-assistant {
+  background: color-mix(in srgb, var(--card-bg) 82%, var(--primary) 18%);
+}
+
+.ai-thread-role {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ai-thread-message p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.ai-follow-up {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.ai-follow-up h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.ai-follow-up-copy {
+  margin: 0 0 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ai-suggested-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.ai-suggestion-chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+}
+
+.ai-suggestion-chip:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--bg) 82%, var(--primary) 18%);
+  transform: translateY(-1px);
+}
+
+.ai-suggestion-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-follow-up-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.ai-follow-up-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.92rem;
+  background: #fff;
+  color: var(--text);
+}
+
+.ai-follow-up-btn {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.ai-follow-up-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+}
+
+.ai-follow-up-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .ai-analysis-header,
+  .ai-follow-up-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* Footer */

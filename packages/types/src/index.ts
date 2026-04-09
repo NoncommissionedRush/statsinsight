@@ -167,8 +167,16 @@ export interface AiAnalysisRequest {
   realEstateMovers?: RealEstateMover[];
   tradeImportMovers?: TradeMover[];
   tradeExportMovers?: TradeMover[];
+  question?: string;
+  history?: AiChatMessage[];
+}
+
+export interface AiChatMessage {
+  role: 'user' | 'assistant';
+  text: string;
 }
 
 export interface AiAnalysisResponse {
   analysis: string;
+  followUpQuestions: string[];
 }
