@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate, analyzeTrade, analyzeWithAI } from './api';
 import { buildChartPayload, computeInsights } from './analytics';
 import { CountryComparisonPicker } from './components/CountryComparisonPicker';
@@ -37,6 +37,7 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 function App() {
+  const lastAutoAiKeyRef = useRef<string | null>(null);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [compareCountries, setCompareCountries] = useState<string[]>([]);
@@ -305,6 +306,30 @@ function App() {
       )
     : [];
 
+  const aiContextReady = Boolean(
+    filteredResult &&
+    rangeStart &&
+    rangeEnd &&
+    (!showGroceryInsights || !groceryLoading) &&
+    (!showRealEstateInsights || !realEstateLoading) &&
+    (!showTradeInsights || !tradeLoading),
+  );
+
+  const aiAutoRunKey = aiContextReady
+    ? JSON.stringify({
+        selected,
+        rangeStart,
+        rangeEnd,
+        compareCountries,
+        groceryComparedFrom: groceryResult?.comparedFrom ?? null,
+        groceryComparedTo: groceryResult?.comparedTo ?? null,
+        realEstateComparedFrom: realEstateResult?.comparedFrom ?? null,
+        realEstateComparedTo: realEstateResult?.comparedTo ?? null,
+        tradeComparedFrom: tradeResult?.comparedFrom ?? null,
+        tradeComparedTo: tradeResult?.comparedTo ?? null,
+      })
+    : null;
+
   const createAiRequest = (question?: string): AiAnalysisRequest | null => {
     if (!filteredResult || !rangeStart || !rangeEnd) return null;
 
@@ -330,9 +355,13 @@ function App() {
     };
   };
 
-  const handleAiAnalyze = () => {
+  const runAiAnalyze = (mode: 'auto' | 'manual' = 'manual') => {
     const req = createAiRequest();
     if (!req) return;
+
+    if (mode === 'manual' && aiAutoRunKey) {
+      lastAutoAiKeyRef.current = aiAutoRunKey;
+    }
 
     setAiLoading(true);
     setAiError(null);
@@ -351,6 +380,10 @@ function App() {
       .finally(() => {
         setAiLoading(false);
       });
+  };
+
+  const handleAiAnalyze = () => {
+    runAiAnalyze('manual');
   };
 
   const handleAiQuestion = (question: string) => {
@@ -380,6 +413,14 @@ function App() {
         setAiLoading(false);
       });
   };
+
+  useEffect(() => {
+    if (!aiAutoRunKey || aiLoading) return;
+    if (lastAutoAiKeyRef.current === aiAutoRunKey) return;
+
+    lastAutoAiKeyRef.current = aiAutoRunKey;
+    runAiAnalyze('auto');
+  }, [aiAutoRunKey, aiLoading]);
 
   const handleRangeStartChange = (nextStart: string) => {
     if (!result) return;
