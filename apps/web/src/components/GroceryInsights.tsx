@@ -19,10 +19,16 @@ function formatPercent(mover: GroceryMover): string | null {
   return `${sign}${mover.pctChange.toFixed(1)}%`;
 }
 
-function renderMoverCard(title: string, mover: GroceryMover | null, emptyMessage: string, metric: 'absolute' | 'percent' = 'absolute') {
+function renderMoverCard(
+  title: string,
+  mover: GroceryMover | null,
+  emptyMessage: string,
+  metric: 'absolute' | 'percent' = 'absolute',
+  tone: 'increase' | 'decrease' = 'increase',
+) {
   if (!mover) {
     return (
-      <div className="grocery-card">
+      <div className={`grocery-card grocery-card-${tone}`}>
         <h3>{title}</h3>
         <p>{emptyMessage}</p>
       </div>
@@ -33,7 +39,7 @@ function renderMoverCard(title: string, mover: GroceryMover | null, emptyMessage
   const secondary = metric === 'percent' ? formatChange(mover) : formatPercent(mover);
 
   return (
-    <div className="grocery-card">
+    <div className={`grocery-card grocery-card-${tone}`}>
       <h3>{title}</h3>
       <strong>{mover.itemLabel}</strong>
       <p>
@@ -156,23 +162,29 @@ export function GroceryInsights({ data }: Props) {
           'Najväčší nárast',
           data.topIncrease,
           'V tomto období nebol zaznamenaný žiadny nárast ceny potravín.',
+          'absolute',
+          'increase',
         )}
         {renderMoverCard(
           'Najväčší pokles',
           data.topDecrease,
           'V tomto období nebol zaznamenaný žiadny pokles ceny potravín.',
+          'absolute',
+          'decrease',
         )}
         {renderMoverCard(
           'Najväčší % nárast',
           topPctIncrease,
           'V tomto období nebol zaznamenaný žiadny percentuálny nárast ceny potravín.',
           'percent',
+          'increase',
         )}
         {renderMoverCard(
           'Najväčší % pokles',
           topPctDecrease,
           'V tomto období nebol zaznamenaný žiadny percentuálny pokles ceny potravín.',
           'percent',
+          'decrease',
         )}
       </div>
 

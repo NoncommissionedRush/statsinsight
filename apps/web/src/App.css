@@ -483,6 +483,51 @@ header .subtitle {
   height: 320px;
 }
 
+.trade-pie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.trade-pie-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.trade-pie-wrap {
+  width: 100%;
+  height: 340px;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.trade-pie-legend {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.trade-pie-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.trade-pie-legend-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.trade-pie-legend-text {
+  line-height: 1.35;
+}
+
 .grocery-tables {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -623,6 +668,26 @@ header .subtitle {
 .grocery-card p {
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+
+.grocery-card-increase {
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0.08), rgba(220, 38, 38, 0.02));
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+.grocery-card-increase h3,
+.grocery-card-increase strong {
+  color: #991b1b;
+}
+
+.grocery-card-decrease {
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.grocery-card-decrease h3,
+.grocery-card-decrease strong {
+  color: #1d4ed8;
 }
 
 /* Raw data */

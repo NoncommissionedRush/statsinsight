@@ -1,5 +1,17 @@
 import { useRef, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { TradeAnalysisResponse, TradeMover } from '../types';
 import { copyChartHtml, downloadChartHtml, exportSvgChartAsHtml } from './chartExport';
 import { formatPeriodLabel } from '../utils';
@@ -8,15 +20,22 @@ interface Props {
   data: TradeAnalysisResponse;
 }
 
+const TRADE_SHARE_COLORS = ['#2563eb', '#f97316', '#16a34a', '#dc2626', '#7c3aed', '#eab308'];
+
 function formatTradeChange(mover: TradeMover): string {
   const sign = mover.change >= 0 ? '+' : '';
   return `${sign}${mover.change.toFixed(1)} mil. EUR`;
 }
 
-function renderMoverCard(title: string, mover: TradeMover | null, emptyMessage: string) {
+function renderMoverCard(
+  title: string,
+  mover: TradeMover | null,
+  emptyMessage: string,
+  tone: 'increase' | 'decrease',
+) {
   if (!mover) {
     return (
-      <div className="grocery-card">
+      <div className={`grocery-card grocery-card-${tone}`}>
         <h3>{title}</h3>
         <p>{emptyMessage}</p>
       </div>
@@ -26,7 +45,7 @@ function renderMoverCard(title: string, mover: TradeMover | null, emptyMessage: 
   const pct = mover.pctChange === undefined ? 'N/A' : `${mover.pctChange >= 0 ? '+' : ''}${mover.pctChange.toFixed(1)}%`;
 
   return (
-    <div className="grocery-card">
+    <div className={`grocery-card grocery-card-${tone}`}>
       <h3>{title}</h3>
       <strong>{mover.categoryLabel}</strong>
       <p>{formatTradeChange(mover)} ({pct})</p>
@@ -66,6 +85,83 @@ function renderMoverTable(title: string, movers: TradeMover[]) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function renderTradeShareChart(title: string, movers: TradeMover[], periodLabel: string) {
+  const rankedCategories = [...movers]
+    .filter((mover) => mover.endValue > 0)
+    .sort((a, b) => b.endValue - a.endValue);
+
+  const topCategories = rankedCategories.slice(0, 5);
+
+  if (topCategories.length === 0) {
+    return null;
+  }
+
+  const total = rankedCategories.reduce((sum, mover) => sum + mover.endValue, 0);
+  const topTotal = topCategories.reduce((sum, mover) => sum + mover.endValue, 0);
+  const pieData = topCategories.map((mover) => ({
+    name: mover.categoryLabel,
+    value: Number(mover.endValue.toFixed(1)),
+    share: total > 0 ? (mover.endValue / total) * 100 : 0,
+  }));
+
+  if (total > topTotal) {
+    pieData.push({
+      name: 'Ostatné kategórie',
+      value: Number((total - topTotal).toFixed(1)),
+      share: total > 0 ? ((total - topTotal) / total) * 100 : 0,
+    });
+  }
+
+  return (
+    <div className="trade-pie-card">
+      <div className="grocery-chart-copy">
+        <h3>{title}</h3>
+        <p>Najväčšie kategórie podľa hodnoty v koncovom období {periodLabel}.</p>
+      </div>
+      <div className="trade-pie-wrap">
+        <ResponsiveContainer width="100%" height={340}>
+          <PieChart margin={{ top: 2, right: 8, bottom: 8, left: 8 }}>
+            <Pie
+              data={pieData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={56}
+              outerRadius={102}
+              paddingAngle={2}
+            >
+              {pieData.map((entry, index) => (
+                <Cell key={entry.name} fill={TRADE_SHARE_COLORS[index % TRADE_SHARE_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number, _name, item) => {
+                const payload = item.payload as { share?: number };
+                return [`${value.toFixed(1)} mil. EUR (${(payload.share ?? 0).toFixed(1)}%)`, 'Hodnota'];
+              }}
+              contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0' }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="trade-pie-legend">
+        {pieData.map((entry, index) => (
+          <div key={entry.name} className="trade-pie-legend-item">
+            <span
+              className="trade-pie-legend-swatch"
+              style={{ backgroundColor: TRADE_SHARE_COLORS[index % TRADE_SHARE_COLORS.length] }}
+            />
+            <span className="trade-pie-legend-text">
+              {entry.name} ({entry.share.toFixed(1)} %)
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -155,10 +251,10 @@ export function TradeInsights({ data }: Props) {
       </div>
 
       <div className="grocery-grid grocery-grid-four">
-        {renderMoverCard('Najväčší nárast dovozu', data.importTopIncrease, 'V tomto období nebol zaznamenaný žiadny nárast dovozu.')}
-        {renderMoverCard('Najväčší pokles dovozu', data.importTopDecrease, 'V tomto období nebol zaznamenaný žiadny pokles dovozu.')}
-        {renderMoverCard('Najväčší nárast vývozu', data.exportTopIncrease, 'V tomto období nebol zaznamenaný žiadny nárast vývozu.')}
-        {renderMoverCard('Najväčší pokles vývozu', data.exportTopDecrease, 'V tomto období nebol zaznamenaný žiadny pokles vývozu.')}
+        {renderMoverCard('Najväčší nárast dovozu', data.importTopIncrease, 'V tomto období nebol zaznamenaný žiadny nárast dovozu.', 'increase')}
+        {renderMoverCard('Najväčší pokles dovozu', data.importTopDecrease, 'V tomto období nebol zaznamenaný žiadny pokles dovozu.', 'decrease')}
+        {renderMoverCard('Najväčší nárast vývozu', data.exportTopIncrease, 'V tomto období nebol zaznamenaný žiadny nárast vývozu.', 'increase')}
+        {renderMoverCard('Najväčší pokles vývozu', data.exportTopDecrease, 'V tomto období nebol zaznamenaný žiadny pokles vývozu.', 'decrease')}
       </div>
 
       {chartMovers.length > 0 && (
@@ -195,6 +291,19 @@ export function TradeInsights({ data }: Props) {
           </div>
         </div>
       )}
+
+      <div className="trade-pie-grid">
+        {renderTradeShareChart(
+          `Najväčšie kategórie dovozu (${formatPeriodLabel(data.comparedTo)})`,
+          data.importMovers,
+          formatPeriodLabel(data.comparedTo),
+        )}
+        {renderTradeShareChart(
+          `Najväčšie kategórie vývozu (${formatPeriodLabel(data.comparedTo)})`,
+          data.exportMovers,
+          formatPeriodLabel(data.comparedTo),
+        )}
+      </div>
 
       {(data.importMovers.length > 0 || data.exportMovers.length > 0) && (
         <details className="raw-data">
