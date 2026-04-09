@@ -329,6 +329,7 @@ header .subtitle {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .chart-action {
@@ -346,6 +347,29 @@ header .subtitle {
 .chart-action:hover {
   border-color: var(--primary);
   background: var(--primary-light);
+}
+
+.chart-action-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.chart-action-active:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.chart-zoom-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-zoom-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 .chart-export-status {

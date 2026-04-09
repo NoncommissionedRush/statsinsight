@@ -20,6 +20,8 @@ interface Props {
   source?: string;
 }
 
+type AxisScaleMode = 'zero-based' | 'detail';
+
 const COMPARE_COLORS = ['#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2', '#ea580c'];
 
 function buildSeriesLabel(series: TimeSeries): string {
@@ -32,6 +34,7 @@ function buildSeriesLabel(series: TimeSeries): string {
 export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>('zero-based');
   const primarySeriesName = chart.primarySeriesName || 'Slovensko';
   const data = chart.labels.map((label, index) => {
     const row: Record<string, string | number | null> = {
@@ -51,6 +54,42 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
     ? validValues.reduce((sum, value) => sum + value, 0) / validValues.length
     : null;
   const seriesNames = [primarySeriesName, ...compareSeries.map(buildSeriesLabel)];
+  const allVisibleValues = data.flatMap((row) =>
+    seriesNames
+      .map((name) => row[name])
+      .filter((value): value is number => typeof value === 'number'),
+  );
+
+  const yAxisDomain: [number | 'auto', number | 'auto'] = (() => {
+    if (allVisibleValues.length === 0) {
+      return ['auto', 'auto'];
+    }
+
+    const minValue = Math.min(...allVisibleValues);
+    const maxValue = Math.max(...allVisibleValues);
+
+    if (axisScaleMode === 'zero-based') {
+      if (minValue >= 0) {
+        return [0, maxValue === 0 ? 1 : maxValue * 1.05];
+      }
+
+      if (maxValue <= 0) {
+        return [minValue * 1.05, 0];
+      }
+
+      const absMax = Math.max(Math.abs(minValue), Math.abs(maxValue));
+      return [-absMax * 1.05, absMax * 1.05];
+    }
+
+    if (minValue === maxValue) {
+      const padding = minValue === 0 ? 1 : Math.abs(minValue) * 0.05;
+      return [minValue - padding, maxValue + padding];
+    }
+
+    const spread = maxValue - minValue;
+    const padding = spread * 0.12;
+    return [minValue - padding, maxValue + padding];
+  })();
 
   const getExportHtml = () => {
     return exportSvgChartAsHtml({
@@ -87,6 +126,23 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
       <div className="chart-header">
         <h2>{chart.title}</h2>
         <div className="chart-actions">
+          <div className="chart-zoom-controls" aria-label="Nastavenie mierky hodnotovej osi">
+            <span className="chart-zoom-label">Mierka osi hodnôt:</span>
+            <button
+              type="button"
+              className={`chart-action ${axisScaleMode === 'zero-based' ? 'chart-action-active' : ''}`}
+              onClick={() => setAxisScaleMode('zero-based')}
+            >
+              Od nuly
+            </button>
+            <button
+              type="button"
+              className={`chart-action ${axisScaleMode === 'detail' ? 'chart-action-active' : ''}`}
+              onClick={() => setAxisScaleMode('detail')}
+            >
+              Priblížiť
+            </button>
+          </div>
           <button type="button" className="chart-action" onClick={handleCopy}>
             Kopírovať HTML
           </button>
@@ -107,6 +163,7 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
             height={80}
           />
           <YAxis
+            domain={yAxisDomain}
             tick={{ fontSize: 12 }}
             label={{ value: chart.unit, angle: -90, position: 'insideLeft', offset: -5 }}
           />
