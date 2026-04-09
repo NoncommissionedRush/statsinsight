@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   CartesianGrid,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -35,6 +36,7 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [axisScaleMode, setAxisScaleMode] = useState<AxisScaleMode>('zero-based');
+  const [showPointValues, setShowPointValues] = useState(false);
   const primarySeriesName = chart.primarySeriesName || 'Slovensko';
   const data = chart.labels.map((label, index) => {
     const row: Record<string, string | number | null> = {
@@ -143,6 +145,13 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
               Priblížiť
             </button>
           </div>
+          <button
+            type="button"
+            className={`chart-action ${showPointValues ? 'chart-action-active' : ''}`}
+            onClick={() => setShowPointValues((current) => !current)}
+          >
+            {showPointValues ? 'Skryť hodnoty' : 'Zobraziť hodnoty'}
+          </button>
           <button type="button" className="chart-action" onClick={handleCopy}>
             Kopírovať HTML
           </button>
@@ -192,7 +201,19 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
             dot={{ r: 3 }}
             activeDot={{ r: 6 }}
             connectNulls
-          />
+          >
+            {showPointValues && (
+              <LabelList
+                dataKey={primarySeriesName}
+                position="top"
+                offset={10}
+                formatter={(value: number | string) =>
+                  typeof value === 'number' ? value.toFixed(2) : value
+                }
+                style={{ fill: '#1e293b', fontSize: 11, fontWeight: 600 }}
+              />
+            )}
+          </Line>
           {compareSeries.map((series, index) => (
             <Line
               key={buildSeriesLabel(series)}
