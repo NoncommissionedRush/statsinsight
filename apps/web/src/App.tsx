@@ -67,6 +67,9 @@ function App() {
   const showTradeInsights = selected === TRADE_DATASET_ID;
   const showCountryComparison =
     selectedEntry?.source === 'eurostat' && COUNTRY_COMPARISON_DATASET_IDS.has(selectedEntry.id);
+  const sourceCount = new Set(catalog.map((entry) => entry.source)).size;
+  const selectedSourceLabel = selectedEntry ? SOURCE_LABELS[selectedEntry.source] ?? selectedEntry.source : null;
+  const comparisonLabel = compareCountries.length > 0 ? `${compareCountries.length} krajiny` : 'Bez porovnania';
 
   useEffect(() => {
     getCatalog()
@@ -425,31 +428,132 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <header>
-        <h1>StatInsight</h1>
-        <p className="subtitle">Štatistický nástroj pre analýzu dát SR</p>
-      </header>
-
-      <main>
-        <DatasetPicker
-          catalog={catalog}
-          selected={selected}
-          loading={loading}
-          onSelect={handleSelect}
-        />
-
-        {loading && !result && (
-          <div className="loading">
-            <div className="spinner" />
-            <p>Načítavam a analyzujem dáta...</p>
+    <div className="app-shell">
+      <div className="app-shell-orb app-shell-orb-one" />
+      <div className="app-shell-orb app-shell-orb-two" />
+      <div className="app">
+        <header className="hero">
+          <div className="hero-copy">
+            <span className="hero-kicker">National statistics, redesigned</span>
+            <h1>StatInsight</h1>
+            <p className="subtitle">
+              Moderný analytický priestor pre objavovanie trendov v slovenských dátach, porovnaniach a AI vysvetleniach.
+            </p>
+            <div className="hero-actions">
+              <span className="hero-chip">Živé grafy</span>
+              <span className="hero-chip">AI interpretácia</span>
+              <span className="hero-chip">Export do HTML</span>
+            </div>
           </div>
-        )}
 
-        {error && <div className="error">{error}</div>}
+          <div className="hero-panel">
+            <p className="hero-panel-label">Rýchly prehľad</p>
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <strong>{catalog.length}</strong>
+                <span>Dostupných datasetov</span>
+              </div>
+              <div className="hero-stat">
+                <strong>{sourceCount}</strong>
+                <span>Dátových zdrojov</span>
+              </div>
+              <div className="hero-stat">
+                <strong>{selectedEntry ? 'Aktívny' : 'Čaká sa'}</strong>
+                <span>Stav výberu</span>
+              </div>
+            </div>
 
-        {result && filteredResult && rangeStart && rangeEnd && (
-          <div className="results">
+            <div className="hero-spotlight">
+              <span className="hero-spotlight-label">Aktuálny fokus</span>
+              {selectedEntry ? (
+                <>
+                  <h2>{selectedEntry.label}</h2>
+                  <p>{selectedEntry.description}</p>
+                  <div className="hero-spotlight-meta">
+                    <span>{selectedSourceLabel}</span>
+                    <span>{selectedEntry.unit}</span>
+                    <span>{comparisonLabel}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2>Vyberte dataset</h2>
+                  <p>Začnite z katalógu nižšie a rozbaľte dashboard pre konkrétny časový rad.</p>
+                  <div className="hero-spotlight-meta">
+                    <span>Kurátorovaný katalóg</span>
+                    <span>Responsive dashboard</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main className="main-layout">
+          <section className="surface-panel surface-panel-datasets">
+            <DatasetPicker
+              catalog={catalog}
+              selected={selected}
+              loading={loading}
+              onSelect={handleSelect}
+            />
+          </section>
+
+          {loading && !result && (
+            <div className="loading">
+              <div className="spinner" />
+              <p>Načítavam a analyzujem dáta...</p>
+            </div>
+          )}
+
+          {error && <div className="error">{error}</div>}
+
+          {!result && !loading && !error && (
+            <section className="empty-state">
+              <div>
+                <p className="empty-state-kicker">Pripravené na analýzu</p>
+                <h2>Vyberte si pohľad na ekonomiku, ceny alebo bývanie</h2>
+                <p>
+                  Po výbere datasetu sa zobrazí interaktívny graf, automatické postrehy, doplnkové analytické bloky a AI vrstva na ďalšie otázky.
+                </p>
+              </div>
+              <div className="empty-state-grid">
+                <article className="empty-state-card">
+                  <span>01</span>
+                  <h3>Objavte trend</h3>
+                  <p>Prejdite od surového časového radu ku grafu a highlightom v jednom toku.</p>
+                </article>
+                <article className="empty-state-card">
+                  <span>02</span>
+                  <h3>Zaostrite obdobie</h3>
+                  <p>Vyrežte si len relevantný časový úsek a okamžite uvidíte upravené insighty.</p>
+                </article>
+                <article className="empty-state-card">
+                  <span>03</span>
+                  <h3>Pýtajte sa AI</h3>
+                  <p>Nechajte si vysvetliť anomálie, porovnania aj praktické súvislosti priamo nad dátami.</p>
+                </article>
+              </div>
+            </section>
+          )}
+
+          {result && filteredResult && rangeStart && rangeEnd && (
+            <div className="results">
+              <section className="results-overview">
+                <div>
+                  <p className="results-kicker">Aktívna analýza</p>
+                  <h2>{filteredResult.series.datasetLabel}</h2>
+                  <p className="results-description">
+                    {selectedEntry?.description ?? 'Vybraný dataset je pripravený na podrobné preskúmanie.'}
+                  </p>
+                </div>
+                <div className="results-meta">
+                  <span>{selectedSourceLabel}</span>
+                  <span>{filteredResult.series.unit}</span>
+                  <span>{filteredResult.series.points.length} bodov</span>
+                </div>
+              </section>
+
             {showCountryComparison && (
               <CountryComparisonPicker
                 options={COUNTRY_OPTIONS}
@@ -540,17 +644,18 @@ function App() {
                 </tbody>
               </table>
             </details>
-          </div>
-        )}
-      </main>
+            </div>
+          )}
+        </main>
 
-      <footer>
-        <p>
-          Zdroje: <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noreferrer">Eurostat</a>
-          {' | '}
-          <a href="https://datacube.statistics.sk" target="_blank" rel="noreferrer">SU SR DATAcube</a>
-        </p>
-      </footer>
+        <footer className="app-footer">
+          <p>
+            Zdroje: <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noreferrer">Eurostat</a>
+            {' | '}
+            <a href="https://datacube.statistics.sk" target="_blank" rel="noreferrer">SU SR DATAcube</a>
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
