@@ -136,6 +136,10 @@ export function SectorInsights({
     normalizeQuarterLike(data.requestedTo) !== normalizeQuarterLike(data.comparedTo);
   const strongestIncrease = data.topIncrease ?? data.movers[0] ?? null;
   const strongestDecrease = data.topDecrease ?? data.movers[data.movers.length - 1] ?? null;
+  const increaseTitle =
+    strongestIncrease && strongestIncrease.change < 0 ? 'Najmenší pokles' : 'Najväčší nárast';
+  const decreaseTitle =
+    strongestDecrease && strongestDecrease.change > 0 ? 'Najmenší rast' : 'Najväčší pokles';
   const moversWithPct = data.movers.filter((mover) => mover.pctChange !== undefined);
   const topPctIncrease = moversWithPct.reduce<SectorMover | null>(
     (best, mover) => (best === null || (mover.pctChange ?? -Infinity) > (best.pctChange ?? -Infinity) ? mover : best),
@@ -145,6 +149,10 @@ export function SectorInsights({
     (best, mover) => (best === null || (mover.pctChange ?? Infinity) < (best.pctChange ?? Infinity) ? mover : best),
     strongestDecrease,
   );
+  const pctIncreaseTitle =
+    topPctIncrease && (topPctIncrease.pctChange ?? 0) < 0 ? 'Najmenší % pokles' : 'Najväčší % nárast';
+  const pctDecreaseTitle =
+    topPctDecrease && (topPctDecrease.pctChange ?? 0) > 0 ? 'Najmenší % rast' : 'Najväčší % pokles';
 
   const topIncreases = data.movers.filter((mover) => mover.change > 0).slice(0, 5);
   const topDecreases = [...data.movers]
@@ -218,7 +226,7 @@ export function SectorInsights({
 
       <div className="grocery-grid grocery-grid-four">
         {renderMoverCard(
-          'Najväčší nárast',
+          increaseTitle,
           strongestIncrease,
           'V tomto období nebol zaznamenaný žiadny nárast.',
           unitLabel,
@@ -228,7 +236,7 @@ export function SectorInsights({
           'increase',
         )}
         {renderMoverCard(
-          'Najväčší pokles',
+          decreaseTitle,
           strongestDecrease,
           'V tomto období nebol zaznamenaný žiadny pokles.',
           unitLabel,
@@ -238,7 +246,7 @@ export function SectorInsights({
           'decrease',
         )}
         {renderMoverCard(
-          'Najväčší % nárast',
+          pctIncreaseTitle,
           topPctIncrease,
           'V tomto období nebol zaznamenaný žiadny percentuálny nárast.',
           unitLabel,
@@ -248,7 +256,7 @@ export function SectorInsights({
           'increase',
         )}
         {renderMoverCard(
-          'Najväčší % pokles',
+          pctDecreaseTitle,
           topPctDecrease,
           'V tomto období nebol zaznamenaný žiadny percentuálny pokles.',
           unitLabel,
