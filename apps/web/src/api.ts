@@ -8,6 +8,12 @@ import type {
   AiAnalysisResponse,
 } from './types';
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+function apiUrl(path: string): string {
+  return `${API_BASE_URL}${path}`;
+}
+
 async function getErrorMessage(res: Response, fallback: string): Promise<string> {
   const text = await res.text().catch(() => '');
   if (!text) return fallback;
@@ -25,7 +31,7 @@ async function getErrorMessage(res: Response, fallback: string): Promise<string>
 }
 
 export async function getCatalog(): Promise<CatalogEntry[]> {
-  const res = await fetch('/api/catalog');
+  const res = await fetch(apiUrl('/api/catalog'));
   if (!res.ok) {
     throw new Error(await getErrorMessage(res, `Nepodarilo sa načítať katalóg: ${res.status}`));
   }
@@ -33,7 +39,7 @@ export async function getCatalog(): Promise<CatalogEntry[]> {
 }
 
 export async function analyze(catalogId: string, compareCountries: string[] = []): Promise<AnalyzeResponse> {
-  const res = await fetch('/api/analyze', {
+  const res = await fetch(apiUrl('/api/analyze'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ catalogId, compareCountries }),
@@ -45,7 +51,7 @@ export async function analyze(catalogId: string, compareCountries: string[] = []
 }
 
 export async function analyzeGroceries(from: string, to: string): Promise<GroceryAnalysisResponse> {
-  const res = await fetch('/api/grocery-analysis', {
+  const res = await fetch(apiUrl('/api/grocery-analysis'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to }),
@@ -57,7 +63,7 @@ export async function analyzeGroceries(from: string, to: string): Promise<Grocer
 }
 
 export async function analyzeRealEstate(from: string, to: string): Promise<RealEstateAnalysisResponse> {
-  const res = await fetch('/api/real-estate-analysis', {
+  const res = await fetch(apiUrl('/api/real-estate-analysis'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to }),
@@ -69,7 +75,7 @@ export async function analyzeRealEstate(from: string, to: string): Promise<RealE
 }
 
 export async function analyzeTrade(from: string, to: string): Promise<TradeAnalysisResponse> {
-  const res = await fetch('/api/trade-analysis', {
+  const res = await fetch(apiUrl('/api/trade-analysis'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to }),
@@ -81,7 +87,7 @@ export async function analyzeTrade(from: string, to: string): Promise<TradeAnaly
 }
 
 export async function analyzeWithAI(request: AiAnalysisRequest): Promise<AiAnalysisResponse> {
-  const res = await fetch('/api/ai-analysis', {
+  const res = await fetch(apiUrl('/api/ai-analysis'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
