@@ -43,8 +43,8 @@ export const CATALOG: CatalogEntry[] = [
     },
   },
   {
-    id: 'datacube:sp1002qs',
-    source: 'datacube',
+    id: 'susr:sp1002qs',
+    source: 'susr',
     datasetCode: 'sp1002qs',
     label: 'Index cien nehnuteľností (štvrťročný) - Slovensko',
     description: 'Štvrťročný transakčný cenový index pre nehnuteľnosti, priemer 2010 = 100',
@@ -52,8 +52,8 @@ export const CATALOG: CatalogEntry[] = [
     defaultFilters: {},
   },
   {
-    id: 'datacube:zo0020ms',
-    source: 'datacube',
+    id: 'susr:zo0020ms',
+    source: 'susr',
     datasetCode: 'zo0020ms',
     label: 'Dovoz a vývoz podľa kategórie BEC (mesačný) - Slovensko',
     description: 'Zahraničný obchod podľa hlavných ekonomických kategórií (BEC Rev. 4)',
@@ -70,6 +70,49 @@ export const CATALOG: CatalogEntry[] = [
     defaultFilters: {},
     susrConfig: {
       pathSegments: ['last5', '1. Q.,2. Q.,3. Q.,4. Q.', 'UKAZ03', 'NACE01'],
+    },
+  },
+  {
+    id: 'susr:pr0204qs',
+    source: 'susr',
+    datasetCode: 'pr0204qs',
+    label: 'Priemerná mesačná mzda (štvrťročná) - Slovensko',
+    description: 'Priemerná nominálna mesačná mzda zamestnanca v hospodárstve SR',
+    unit: 'EUR',
+    defaultFilters: {},
+    susrConfig: {
+      pathSegments: ['last5', '1. Q.,2. Q.,3. Q.,4. Q.', 'UKAZ01', 'Eur'],
+    },
+  },
+  {
+    id: 'susr:pr2003qs',
+    source: 'susr',
+    datasetCode: 'pr2003qs',
+    label: 'Miera voľných pracovných miest (štvrťročná) - Slovensko',
+    description: 'Miera voľných pracovných miest za ekonomiku spolu',
+    unit: '%',
+    defaultFilters: {},
+    susrConfig: {
+      pathSegments: ['last5', '1.Q.,2.Q.,3.Q.,4.Q.', '15oby24', 'nace2'],
+    },
+  },
+  {
+    id: 'susr:pm0042ms',
+    source: 'susr',
+    datasetCode: 'pm0042ms',
+    label: 'Priemyselná produkcia (mesačný index) - Slovensko',
+    description: 'Priemyselná produkcia, medziročný index, očistené, priemysel spolu',
+    unit: 'index',
+    defaultFilters: {},
+    susrConfig: {
+      pathSegments: [
+        'last2',
+        '1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.',
+        'SPECU_Y_ROMR',
+        '05-39',
+        'UNIT_INDEX',
+        'U_PM_0001',
+      ],
     },
   },
 ];

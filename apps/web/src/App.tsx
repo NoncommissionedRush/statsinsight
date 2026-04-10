@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate, analyzeTrade, analyzeWithAI } from './api';
+import { getCatalog, analyze, analyzeGroceries, analyzeRealEstate, analyzeTrade, analyzeSector, analyzeWithAI } from './api';
 import { buildChartPayload, computeInsights } from './analytics';
 import { CountryComparisonPicker } from './components/CountryComparisonPicker';
 import { DatasetPicker } from './components/DatasetPicker';
@@ -10,12 +10,14 @@ import { RealEstateInsights } from './components/RealEstateInsights';
 import { TradeInsights } from './components/TradeInsights';
 import { TimeRangePicker } from './components/TimeRangePicker';
 import { AIAnalysis } from './components/AIAnalysis';
+import { SectorInsights } from './components/SectorInsights';
 import { COUNTRY_OPTIONS } from './countries';
 import type {
   CatalogEntry,
   AnalyzeResponse,
   GroceryAnalysisResponse,
   RealEstateAnalysisResponse,
+  SectorAnalysisResponse,
   TradeAnalysisResponse,
   AiAnalysisRequest,
   AiChatMessage,
@@ -23,8 +25,16 @@ import type {
 import './App.css';
 
 const GROCERY_INSIGHTS_DATASET_ID = 'eurostat:prc_hicp_manr';
-const REAL_ESTATE_DATASET_ID = 'datacube:sp1002qs';
-const TRADE_DATASET_ID = 'datacube:zo0020ms';
+const REAL_ESTATE_DATASET_ID = 'susr:sp1002qs';
+const TRADE_DATASET_ID = 'susr:zo0020ms';
+const WAGES_DATASET_ID = 'susr:pr0204qs';
+const VACANCIES_DATASET_ID = 'susr:pr2003qs';
+const INDUSTRY_DATASET_ID = 'susr:pm0042ms';
+const SECTOR_INSIGHTS_DATASET_IDS = new Set([
+  WAGES_DATASET_ID,
+  VACANCIES_DATASET_ID,
+  INDUSTRY_DATASET_ID,
+]);
 const COUNTRY_COMPARISON_DATASET_IDS = new Set([
   'eurostat:prc_hicp_manr',
   'eurostat:une_rt_m',
@@ -50,6 +60,9 @@ function App() {
   const [tradeResult, setTradeResult] = useState<TradeAnalysisResponse | null>(null);
   const [tradeLoading, setTradeLoading] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
+  const [sectorResult, setSectorResult] = useState<SectorAnalysisResponse | null>(null);
+  const [sectorLoading, setSectorLoading] = useState(false);
+  const [sectorError, setSectorError] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,6 +78,7 @@ function App() {
   const showGroceryInsights = selected === GROCERY_INSIGHTS_DATASET_ID;
   const showRealEstateInsights = selected === REAL_ESTATE_DATASET_ID;
   const showTradeInsights = selected === TRADE_DATASET_ID;
+  const showSectorInsights = selected !== null && SECTOR_INSIGHTS_DATASET_IDS.has(selected);
   const showCountryComparison =
     selectedEntry?.source === 'eurostat' && COUNTRY_COMPARISON_DATASET_IDS.has(selectedEntry.id);
   const sourceCount = new Set(catalog.map((entry) => entry.source)).size;
@@ -91,12 +105,16 @@ function App() {
   const handleSelect = (id: string) => {
     setSelected(id);
     setResult(null);
+    setRangeStart(null);
+    setRangeEnd(null);
     setGroceryResult(null);
     setGroceryError(null);
     setRealEstateResult(null);
     setRealEstateError(null);
     setTradeResult(null);
     setTradeError(null);
+    setSectorResult(null);
+    setSectorError(null);
     setCompareCountries([]);
     setAiAnalysis(null);
     setAiFollowUpQuestions([]);
@@ -239,6 +257,41 @@ function App() {
       cancelled = true;
     };
   }, [result, rangeStart, rangeEnd, showTradeInsights]);
+
+  useEffect(() => {
+    if (!selected || !result || !rangeStart || !rangeEnd || !showSectorInsights) {
+      setSectorResult(null);
+      setSectorError(null);
+      setSectorLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSectorLoading(true);
+    setSectorError(null);
+
+    analyzeSector(selected, rangeStart, rangeEnd)
+      .then((data) => {
+        if (!cancelled) {
+          setSectorResult(data);
+        }
+      })
+      .catch((e: Error) => {
+        if (!cancelled) {
+          setSectorResult(null);
+          setSectorError(`Sektorová analýza nedostupná: ${e.message}`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSectorLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, result, rangeStart, rangeEnd, showSectorInsights]);
 
   const rangeOptions = result?.series.points.map((point) => ({
     value: point.time,
@@ -427,6 +480,33 @@ function App() {
     if (aiAnalysis) setAiStale(true);
   };
 
+  const sectorInsightMeta =
+    selected === WAGES_DATASET_ID
+      ? {
+          title: 'Mzdové rozdiely podľa odvetví',
+          intro: 'Porovnanie priemernej mesačnej mzdy naprieč odvetviami za obdobie',
+          unitLabel: 'EUR',
+          changeDecimals: 0,
+          valueDecimals: 0,
+        }
+      : selected === VACANCIES_DATASET_ID
+        ? {
+            title: 'Voľné pracovné miesta podľa sektorov',
+            intro: 'Porovnanie miery voľných pracovných miest podľa sektorov za obdobie',
+            unitLabel: '%',
+            changeDecimals: 1,
+            valueDecimals: 1,
+          }
+        : selected === INDUSTRY_DATASET_ID
+          ? {
+              title: 'Priemyselná produkcia podľa odvetví',
+              intro: 'Porovnanie medziročného indexu priemyselnej produkcie podľa odvetví za obdobie',
+              unitLabel: 'index',
+              changeDecimals: 1,
+              valueDecimals: 1,
+            }
+          : null;
+
   return (
     <div className="app-shell">
       <div className="app-shell-orb app-shell-orb-one" />
@@ -612,6 +692,23 @@ function App() {
               </section>
             )}
 
+            {showSectorInsights && sectorInsightMeta && (
+              <section className="groceries-shell">
+                {sectorLoading && <p className="groceries-status">Analyzujem sektorové rozdiely...</p>}
+                {sectorError && <p className="groceries-status error-text">{sectorError}</p>}
+                {sectorResult && !sectorLoading && (
+                  <SectorInsights
+                    data={sectorResult}
+                    title={sectorInsightMeta.title}
+                    intro={sectorInsightMeta.intro}
+                    unitLabel={sectorInsightMeta.unitLabel}
+                    changeDecimals={sectorInsightMeta.changeDecimals}
+                    valueDecimals={sectorInsightMeta.valueDecimals}
+                  />
+                )}
+              </section>
+            )}
+
             <AIAnalysis
               analysis={aiAnalysis}
               followUpQuestions={aiFollowUpQuestions}
@@ -652,7 +749,7 @@ function App() {
           <p>
             Zdroje: <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noreferrer">Eurostat</a>
             {' | '}
-            <a href="https://datacube.statistics.sk" target="_blank" rel="noreferrer">SU SR DATAcube</a>
+            <a href="https://data.statistics.sk/api/html/help-en.html" target="_blank" rel="noreferrer">Štatistický úrad SR API</a>
           </p>
         </footer>
       </div>

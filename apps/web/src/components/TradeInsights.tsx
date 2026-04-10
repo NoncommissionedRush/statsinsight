@@ -213,7 +213,7 @@ export function TradeInsights({ data }: Props) {
       title: exportTitle,
       unit: 'mil. EUR',
       seriesNames: chartMovers.map((mover) => mover.name),
-      source: 'SU SR DATAcube',
+      source: 'Štatistický úrad SR API',
     });
 
   const handleCopy = async () => {

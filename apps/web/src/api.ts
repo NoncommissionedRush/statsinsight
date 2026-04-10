@@ -3,6 +3,7 @@ import type {
   AnalyzeResponse,
   GroceryAnalysisResponse,
   RealEstateAnalysisResponse,
+  SectorAnalysisResponse,
   TradeAnalysisResponse,
   AiAnalysisRequest,
   AiAnalysisResponse,
@@ -82,6 +83,18 @@ export async function analyzeTrade(from: string, to: string): Promise<TradeAnaly
   });
   if (!res.ok) {
     throw new Error(await getErrorMessage(res, `Analýza obchodu zlyhala: ${res.status}`));
+  }
+  return res.json();
+}
+
+export async function analyzeSector(datasetId: string, from: string, to: string): Promise<SectorAnalysisResponse> {
+  const res = await fetch(apiUrl('/api/sector-analysis'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ datasetId, from, to }),
+  });
+  if (!res.ok) {
+    throw new Error(await getErrorMessage(res, `Analýza sektorov zlyhala: ${res.status}`));
   }
   return res.json();
 }

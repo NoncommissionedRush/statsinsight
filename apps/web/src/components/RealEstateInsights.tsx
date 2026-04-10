@@ -100,7 +100,7 @@ export function RealEstateInsights({ data }: Props) {
       title: exportTitle,
       unit: 'indexové body',
       seriesNames: chartMovers.map((mover) => mover.name),
-      source: 'SU SR DATAcube',
+      source: 'Štatistický úrad SR API',
     });
 
   const handleCopy = async () => {

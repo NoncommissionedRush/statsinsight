@@ -109,6 +109,26 @@ export interface TradeAnalysisResponse {
   exportMovers: TradeMover[];
 }
 
+export interface SectorMover {
+  seriesCode: string;
+  seriesLabel: string;
+  startValue: number;
+  endValue: number;
+  change: number;
+  pctChange?: number;
+}
+
+export interface SectorAnalysisResponse {
+  requestedFrom: string;
+  requestedTo: string;
+  comparedFrom: string;
+  comparedTo: string;
+  measureLabel: string;
+  topIncrease: SectorMover | null;
+  topDecrease: SectorMover | null;
+  movers: SectorMover[];
+}
+
 export interface AiAnalysisRequest {
   datasetLabel: string;
   unit: string;

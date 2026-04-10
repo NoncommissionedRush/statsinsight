@@ -130,6 +130,12 @@ export interface TradeAnalysisRequest {
   to: string;
 }
 
+export interface SectorAnalysisRequest {
+  datasetId: string;
+  from: string;
+  to: string;
+}
+
 export interface TradeMover {
   seriesCode: string;
   categoryLabel: string;
@@ -151,6 +157,26 @@ export interface TradeAnalysisResponse {
   exportTopDecrease: TradeMover | null;
   importMovers: TradeMover[];
   exportMovers: TradeMover[];
+}
+
+export interface SectorMover {
+  seriesCode: string;
+  seriesLabel: string;
+  startValue: number;
+  endValue: number;
+  change: number;
+  pctChange?: number;
+}
+
+export interface SectorAnalysisResponse {
+  requestedFrom: string;
+  requestedTo: string;
+  comparedFrom: string;
+  comparedTo: string;
+  measureLabel: string;
+  topIncrease: SectorMover | null;
+  topDecrease: SectorMover | null;
+  movers: SectorMover[];
 }
 
 // === AI Analysis ===

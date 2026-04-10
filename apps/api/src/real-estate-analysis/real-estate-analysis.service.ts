@@ -1,14 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { execFile } from 'node:child_process';
-import * as path from 'node:path';
-import { promisify } from 'node:util';
 import type { CatalogEntry, RealEstateAnalysisResponse, RealEstateMover, TimeSeries } from '@statinsight/types';
 import { CacheService } from '../cache/cache.service';
 
-const execFileAsync = promisify(execFile);
-const SNAPSHOT_CACHE_KEY = 'real-estate-datacube-snapshots:v1';
+const SNAPSHOT_CACHE_KEY = 'real-estate-susr-snapshots:v2';
 const HEADLINE_PROPERTY_LABEL = 'Nehnuteľnosti spolu';
 const HEADLINE_MEASURE_LABEL = 'Priemer roku 2010 = 100';
+const DATASET_CODE = 'sp1002qs';
+const API_URL =
+  'https://data.statistics.sk/api/v2/dataset/sp1002qs/last5/1.%20Q.,2.%20Q.,3.%20Q.,4.%20Q./all/MJ01?lang=sk&type=json';
 
 interface SnapshotItem {
   seriesCode: string;
@@ -43,11 +42,11 @@ export class RealEstateAnalysisService {
     });
 
     if (!points.some((point) => point.value !== null)) {
-      throw new BadRequestException('The DATAcube real estate view returned no headline index values.');
+      throw new BadRequestException('The Statistics Office API returned no headline real estate index values.');
     }
 
     return {
-      source: 'datacube',
+      source: entry.source,
       datasetCode: entry.datasetCode,
       datasetLabel: entry.label,
       unit: entry.unit,
@@ -92,29 +91,81 @@ export class RealEstateAnalysisService {
       return cached;
     }
 
-    const scriptPath = path.resolve(__dirname, '../../scripts/fetch-real-estate-datacube.mjs');
-
     try {
-      const { stdout } = await execFileAsync('node', [scriptPath], {
-        maxBuffer: 8 * 1024 * 1024,
-        timeout: 90_000,
-      });
+      const response = await fetch(API_URL);
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`SUSR API error ${response.status}: ${text.slice(0, 200)}`);
+      }
 
-      const parsed = JSON.parse(stdout.trim()) as SnapshotPayload;
-      if (!parsed.availablePeriods?.length) {
-        throw new Error('The DATAcube real estate view returned no visible periods.');
+      const raw = await response.json();
+      const parsed = this.parseSnapshotDataset(raw);
+      if (!parsed.availablePeriods.length) {
+        throw new Error('The Statistics Office API returned no visible periods.');
       }
 
       this.cache.set(SNAPSHOT_CACHE_KEY, parsed);
       return parsed;
     } catch (error: any) {
-      const stderr = typeof error?.stderr === 'string' ? error.stderr.trim() : '';
-      const stdout = typeof error?.stdout === 'string' ? error.stdout.trim() : '';
-      const message =
-        stderr || stdout || error?.message || 'The DATAcube real estate fetch failed unexpectedly.';
-
-      throw new BadRequestException(`Failed to fetch real estate prices from DATAcube: ${message}`);
+      const message = error?.message || 'The official Statistics Office API fetch failed unexpectedly.';
+      throw new BadRequestException(`Failed to fetch real estate prices from the Statistics Office API: ${message}`);
     }
+  }
+
+  private parseSnapshotDataset(raw: any): SnapshotPayload {
+    const yearDim = raw.dimension?.sp1002qs_rok;
+    const quarterDim = raw.dimension?.sp1002qs_stv;
+    const propertyDim = raw.dimension?.sp1002qs_ukaz;
+    const measureDim = raw.dimension?.sp1002qs_mj;
+    const values = raw.value;
+
+    if (!yearDim || !quarterDim || !propertyDim || !measureDim || !Array.isArray(values)) {
+      throw new Error('Invalid real estate response shape from SUSR API.');
+    }
+
+    const years = this.getOrderedCodes(yearDim.category.index);
+    const quarters = this.getOrderedCodes(quarterDim.category.index);
+    const properties = this.getOrderedCodes(propertyDim.category.index);
+    const measures = this.getOrderedCodes(measureDim.category.index);
+    const sizes = raw.size as number[];
+    const snapshots: Record<string, SnapshotItem[]> = {};
+    const availablePeriods: string[] = [];
+
+    for (const year of years) {
+      for (const quarter of quarters) {
+        const period = `${year}-Q${this.parseQuarterNumber(quarter)}`;
+        availablePeriods.push(period);
+        const items: SnapshotItem[] = [];
+
+        for (const property of properties) {
+          for (const measure of measures) {
+            const flatIndex = this.computeFlatIndex(
+              sizes,
+              yearDim.category.index[year],
+              quarterDim.category.index[quarter],
+              propertyDim.category.index[property],
+              measureDim.category.index[measure],
+              0,
+            );
+            const value = this.getValue(values, flatIndex);
+            if (value === null) continue;
+
+            items.push({
+              seriesCode: `${property}:${measure}`,
+              propertyLabel: propertyDim.category.label?.[property] ?? property,
+              measureLabel: measureDim.category.label?.[measure] ?? measure,
+              value,
+            });
+          }
+        }
+
+        snapshots[period] = items;
+      }
+    }
+
+    availablePeriods.sort((a, b) => a.localeCompare(b));
+
+    return { availablePeriods, snapshots };
   }
 
   private getSnapshotForPeriod(dataset: SnapshotPayload, period: string): Map<string, SnapshotItem> {
@@ -124,7 +175,7 @@ export class RealEstateAnalysisService {
       const last = dataset.availablePeriods[dataset.availablePeriods.length - 1];
 
       throw new BadRequestException(
-        `Real estate prices are unavailable for ${period}. DATAcube currently exposes ${first} to ${last} in this public real estate view.`,
+        `Real estate prices are unavailable for ${period}. The Statistics Office API currently exposes ${first} to ${last} in this public real estate view.`,
       );
     }
 
@@ -152,7 +203,7 @@ export class RealEstateAnalysisService {
       const last = dataset.availablePeriods[dataset.availablePeriods.length - 1];
 
       throw new BadRequestException(
-        `Real estate prices are unavailable within ${from.normalized} to ${to.normalized}. DATAcube currently exposes quarterly data between ${first} and ${last}.`,
+        `Real estate prices are unavailable within ${from.normalized} to ${to.normalized}. The Statistics Office API currently exposes quarterly data between ${first} and ${last}.`,
       );
     }
 
@@ -204,5 +255,30 @@ export class RealEstateAnalysisService {
 
   private quarterKey(period: { year: number; quarter: number }) {
     return period.year * 10 + period.quarter;
+  }
+
+  private computeFlatIndex(sizes: number[], ...indices: number[]) {
+    let flat = 0;
+    for (let i = 0; i < sizes.length; i++) {
+      flat = flat * sizes[i] + indices[i];
+    }
+    return flat;
+  }
+
+  private getValue(values: any[], flatIndex: number): number | null {
+    const raw = values[flatIndex];
+    return raw === undefined || raw === null ? null : Number(raw);
+  }
+
+  private getOrderedCodes(indexMap: Record<string, number>) {
+    return Object.keys(indexMap).sort((a, b) => indexMap[a] - indexMap[b]);
+  }
+
+  private parseQuarterNumber(value: string) {
+    const match = value.match(/(\d)/);
+    if (!match) {
+      throw new Error(`Unsupported quarter value: ${value}`);
+    }
+    return Number(match[1]);
   }
 }

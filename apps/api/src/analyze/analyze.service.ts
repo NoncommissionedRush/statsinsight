@@ -31,7 +31,7 @@ export class AnalyzeService {
     const normalizedCompareCountries = this.normalizeCompareCountries(compareCountries);
 
     // Check cache
-    const cacheKey = `analyze:${catalogId}:${normalizedCompareCountries.join(',')}`;
+    const cacheKey = `analyze:v2:${catalogId}:${normalizedCompareCountries.join(',')}`;
     const cached = this.cache.get<AnalyzeResponse>(cacheKey);
     if (cached) return cached;
 
@@ -39,19 +39,15 @@ export class AnalyzeService {
     let series: TimeSeries;
     let compareSeries: TimeSeries[] | undefined;
     try {
-      if (entry.source === 'eurostat') {
+      if (entry.datasetCode === 'sp1002qs') {
+        series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
+      } else if (entry.datasetCode === 'zo0020ms') {
+        const tradeData = await this.tradeAnalysis.buildTradeSeries(entry);
+        series = tradeData.series;
+        compareSeries = tradeData.compareSeries;
+      } else if (entry.source === 'eurostat') {
         series = await fetchEurostat(entry.datasetCode, entry.defaultFilters);
         compareSeries = await this.fetchCompareSeries(entry, normalizedCompareCountries);
-      } else if (entry.source === 'datacube') {
-        if (entry.id === 'datacube:sp1002qs') {
-          series = await this.realEstateAnalysis.buildHeadlineSeries(entry);
-        } else if (entry.id === 'datacube:zo0020ms') {
-          const tradeData = await this.tradeAnalysis.buildTradeSeries(entry);
-          series = tradeData.series;
-          compareSeries = tradeData.compareSeries;
-        } else {
-          throw new BadRequestException(`Unsupported DATAcube dataset: ${entry.id}`);
-        }
       } else if (entry.source === 'susr') {
         if (!entry.susrConfig) {
           throw new BadRequestException('SUSR entry missing susrConfig');

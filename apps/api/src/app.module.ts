@@ -7,6 +7,7 @@ import { GroceryAnalysisModule } from './grocery-analysis/grocery-analysis.modul
 import { RealEstateAnalysisModule } from './real-estate-analysis/real-estate-analysis.module';
 import { AiAnalysisModule } from './ai-analysis/ai-analysis.module';
 import { TradeAnalysisModule } from './trade-analysis/trade-analysis.module';
+import { SectorAnalysisModule } from './sector-analysis/sector-analysis.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TradeAnalysisModule } from './trade-analysis/trade-analysis.module';
     GroceryAnalysisModule,
     RealEstateAnalysisModule,
     TradeAnalysisModule,
+    SectorAnalysisModule,
     AiAnalysisModule,
   ],
   controllers: [HealthController],
