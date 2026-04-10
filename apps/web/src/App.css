@@ -306,10 +306,8 @@ header .subtitle {
 }
 
 .chart-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  gap: 0.85rem;
   margin-bottom: 0.75rem;
 }
 
@@ -328,8 +326,20 @@ header .subtitle {
 .chart-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.chart-controls-group {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+}
+
+.chart-controls-group-export {
+  justify-content: flex-end;
 }
 
 .chart-action {
@@ -365,17 +375,34 @@ header .subtitle {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
 }
 
 .chart-zoom-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .chart-export-status {
   color: var(--text-muted);
   font-size: 0.85rem;
   margin-bottom: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .chart-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chart-controls-group,
+  .chart-controls-group-export {
+    width: 100%;
+  }
 }
 
 .groceries-section {

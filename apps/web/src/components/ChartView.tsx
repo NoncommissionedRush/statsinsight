@@ -32,6 +32,15 @@ function buildSeriesLabel(series: TimeSeries): string {
   return geo || series.datasetLabel;
 }
 
+function formatAxisValue(value: number): string {
+  if (!Number.isFinite(value)) {
+    return '';
+  }
+
+  const rounded = Math.abs(value) >= 100 ? value.toFixed(1) : value.toFixed(2);
+  return rounded.replace(/\.0+$|(\.\d*[1-9])0+$/, '$1');
+}
+
 export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
@@ -79,8 +88,7 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
         return [minValue * 1.05, 0];
       }
 
-      const absMax = Math.max(Math.abs(minValue), Math.abs(maxValue));
-      return [-absMax * 1.05, absMax * 1.05];
+      return [Math.min(minValue * 1.05, 0), Math.max(maxValue * 1.05, 0)];
     }
 
     if (minValue === maxValue) {
@@ -128,36 +136,40 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
       <div className="chart-header">
         <h2>{chart.title}</h2>
         <div className="chart-actions">
-          <div className="chart-zoom-controls" aria-label="Nastavenie mierky hodnotovej osi">
-            <span className="chart-zoom-label">Mierka osi hodnôt:</span>
+          <div className="chart-controls-group">
+            <div className="chart-zoom-controls" aria-label="Nastavenie mierky hodnotovej osi">
+              <span className="chart-zoom-label">Mierka osi hodnôt:</span>
+              <button
+                type="button"
+                className={`chart-action ${axisScaleMode === 'zero-based' ? 'chart-action-active' : ''}`}
+                onClick={() => setAxisScaleMode('zero-based')}
+              >
+                Od nuly
+              </button>
+              <button
+                type="button"
+                className={`chart-action ${axisScaleMode === 'detail' ? 'chart-action-active' : ''}`}
+                onClick={() => setAxisScaleMode('detail')}
+              >
+                Priblížiť
+              </button>
+            </div>
             <button
               type="button"
-              className={`chart-action ${axisScaleMode === 'zero-based' ? 'chart-action-active' : ''}`}
-              onClick={() => setAxisScaleMode('zero-based')}
+              className={`chart-action ${showPointValues ? 'chart-action-active' : ''}`}
+              onClick={() => setShowPointValues((current) => !current)}
             >
-              Od nuly
-            </button>
-            <button
-              type="button"
-              className={`chart-action ${axisScaleMode === 'detail' ? 'chart-action-active' : ''}`}
-              onClick={() => setAxisScaleMode('detail')}
-            >
-              Priblížiť
+              {showPointValues ? 'Skryť hodnoty' : 'Zobraziť hodnoty'}
             </button>
           </div>
-          <button
-            type="button"
-            className={`chart-action ${showPointValues ? 'chart-action-active' : ''}`}
-            onClick={() => setShowPointValues((current) => !current)}
-          >
-            {showPointValues ? 'Skryť hodnoty' : 'Zobraziť hodnoty'}
-          </button>
-          <button type="button" className="chart-action" onClick={handleCopy}>
-            Kopírovať HTML
-          </button>
-          <button type="button" className="chart-action" onClick={handleDownload}>
-            Stiahnuť HTML
-          </button>
+          <div className="chart-controls-group chart-controls-group-export">
+            <button type="button" className="chart-action" onClick={handleCopy}>
+              Kopírovať HTML
+            </button>
+            <button type="button" className="chart-action" onClick={handleDownload}>
+              Stiahnuť HTML
+            </button>
+          </div>
         </div>
       </div>
       {exportStatus && <p className="chart-export-status">{exportStatus}</p>}
@@ -173,7 +185,9 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
           />
           <YAxis
             domain={yAxisDomain}
+            width={70}
             tick={{ fontSize: 12 }}
+            tickFormatter={formatAxisValue}
             label={{ value: chart.unit, angle: -90, position: 'insideLeft', offset: -5 }}
           />
           <Tooltip
@@ -224,7 +238,19 @@ export function ChartView({ chart, compareSeries = [], source = '' }: Props) {
               strokeWidth={2}
               dot={false}
               connectNulls
-            />
+            >
+              {showPointValues && (
+                <LabelList
+                  dataKey={buildSeriesLabel(series)}
+                  position="top"
+                  offset={10}
+                  formatter={(value: number | string) =>
+                    typeof value === 'number' ? value.toFixed(2) : value
+                  }
+                  style={{ fill: COMPARE_COLORS[index % COMPARE_COLORS.length], fontSize: 11, fontWeight: 600 }}
+                />
+              )}
+            </Line>
           ))}
         </LineChart>
       </ResponsiveContainer>
