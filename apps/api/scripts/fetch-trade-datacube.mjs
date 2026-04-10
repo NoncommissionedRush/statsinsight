@@ -1,18 +1,42 @@
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const CHROME_BIN = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const REMOTE_PORT = 9227;
 const TARGET_URL =
   'https://datacube.statistics.sk/#!/view/sk/VBD_INTERN/zo0020ms/v_zo0020ms_00_00_00_sk';
 const USER_DATA_DIR = '/tmp/codex-datacube-trade';
 
+function resolveChromeBin() {
+  const candidates = [
+    process.env.CHROME_BIN,
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ].filter(Boolean);
+
+  const match = candidates.find((candidate) => existsSync(candidate));
+  if (!match) {
+    throw new Error(
+      'No supported Chrome or Chromium binary was found. Set CHROME_BIN or install Chromium in the deployment environment.',
+    );
+  }
+
+  return match;
+}
+
 function launchChrome() {
+  const chromeBin = resolveChromeBin();
   return spawn(
-    CHROME_BIN,
+    chromeBin,
     [
       '--headless=new',
       '--disable-gpu',
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
       `--remote-debugging-port=${REMOTE_PORT}`,
       `--user-data-dir=${USER_DATA_DIR}`,
       'about:blank',

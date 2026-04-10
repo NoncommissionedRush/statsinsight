@@ -48,6 +48,7 @@ Environment variables:
 - `PORT`: leave unset, Railway injects it automatically
 - `SQLITE_PATH`: `/data/cache.sqlite`
 - `GEMINI_API_KEY`: your Gemini key if you want the AI analysis feature enabled
+- `RAILPACK_DEPLOY_APT_PACKAGES`: `chromium`
 
 Storage:
 
