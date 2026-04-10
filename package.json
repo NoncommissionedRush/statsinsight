@@ -4,9 +4,13 @@
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "build:packages": "npm -w packages/types run build && npm -w packages/connectors run build && npm -w packages/analytics run build",
+    "build:web": "npm -w apps/web run build",
+    "build:api": "npm -w apps/api run build",
+    "build": "npm run build:packages && npm run build:web && npm run build:api",
     "dev:api": "npm run build:packages && npm -w apps/api run start:dev",
     "dev:web": "npm -w apps/web run dev",
-    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\""
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "start": "npm -w apps/api run start:prod"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
