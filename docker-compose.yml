@@ -1,0 +1,23 @@
+services:
+  statinsight:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      SQLITE_PATH: /data/cache.sqlite
+      CACHE_TTL_SECONDS: "3600"
+      # Set this in Portainer's stack environment variables or in a .env file:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - statinsight-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  statinsight-data:
